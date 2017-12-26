@@ -9,7 +9,7 @@ def zipdir(path, ziph):
             ziph.write(os.path.join(root, file))
 
 if __name__ == '__main__':
-    zipf = zipfile.ZipFile('Submission/%s_MyBot.zip' % datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), 'w', zipfile.ZIP_DEFLATED)
+    zipf = zipfile.ZipFile('submissions/%s_MyBot.zip' % datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), 'w', zipfile.ZIP_DEFLATED)
     zipdir('hlt', zipf)
     zipf.write("MyBot.py")
     zipf.write("monitor.py")
