@@ -32,7 +32,7 @@ try:
         team_planets = []
         for planet in all_planets:
             #TODO check if planets is mine!
-            if planet.owner == game_map.get_me().id:
+            if (planet.is_owned()) and (planet.owner.id == game_map.get_me().id):
                 team_planets.append(planet)
         nb_owned_planets = len(team_planets)
         logger.info("OWN %s planets" % nb_owned_planets)
