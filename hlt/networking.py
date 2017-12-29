@@ -1,7 +1,6 @@
 import sys
 import logging
 import copy
-
 from . import game_map
 
 
@@ -10,8 +9,12 @@ class Game:
     :ivar map: Current map representation
     :ivar initial_map: The initial version of the map before game starts
     """
+
+
+
     @staticmethod
     def _send_string(s):
+        global _connection
         """
         Send data to the game. Call :function:`done_sending` once finished.
 
@@ -22,6 +25,7 @@ class Game:
 
     @staticmethod
     def _done_sending():
+        global _connection
         """
         Finish sending commands to the game.
 
@@ -32,6 +36,7 @@ class Game:
 
     @staticmethod
     def _get_string():
+        global _connection
         """
         Read input from the game.
 
@@ -63,16 +68,20 @@ class Game:
         :param name: The bot name (used for naming the log)
         :return: nothing
         """
-        log_file = "log/{}_{}.log".format(tag, name)
+        #log_file = "log/{}_{}.log".format(tag, name)
+        log_file = "{}_{}.log".format(tag, name)
         logging.basicConfig(filename=log_file, level=logging.DEBUG, filemode='w')
         logging.info("Initialized bot {}".format(name))
 
     def __init__(self, name):
+        global _connection
         """
         Initialize the bot with the given name.
 
         :param name: The name of the bot.
         """
+
+        self.turn = -1
         self._name = name
         self._send_name = False
         tag = int(self._get_string())
@@ -94,6 +103,7 @@ class Game:
             self._send_string(self._name)
             self._done_sending()
             self._send_name = False
-        logging.info("---NEW TURN---")
+        logging.info("---[%s]---NEW TURN---" % self.turn)
+        self.turn+=1
         self.map._parse(self._get_string())
         return self.map

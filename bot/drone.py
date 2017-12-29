@@ -25,6 +25,8 @@ class DroneRole(Enum):
     MINER = "miner"
     # The drone role is to attack the enemy for a short duration
     DEFENDER = "defender"
+    # The drone role is to attack the enemy's miners
+    ASSASSIN = "assassin"
 
 
 class TargetType(Enum):
@@ -138,7 +140,7 @@ class Drone(object):
         else:
             # Otherwise just store it
             self.target_type = target_type
-
+        logger.debug("Ship %s has a new target: %s of type %s" % (self.ship_id, target.id, self.target_type))
 
     def get_previous_role(self):
         """

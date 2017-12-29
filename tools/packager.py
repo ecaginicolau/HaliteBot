@@ -2,17 +2,26 @@
 import os
 import zipfile
 from datetime import datetime
+
+def is_exclude(file):
+    for ext in [".c","pyc",".pyd","exp","lib","obj"]:
+        if file.endswith(ext):
+            return True
+    return False
+
 def zipdir(path, ziph):
     # ziph is zipfile handle
     for root, dirs, files in os.walk(path):
         for file in files:
-            ziph.write(os.path.join(root, file))
+            if not is_exclude(file):
+                ziph.write(os.path.join(root, file))
 
 if __name__ == '__main__':
-    zipf = zipfile.ZipFile('submissions/%s_MyBot.zip' % datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), 'w', zipfile.ZIP_DEFLATED)
+    zipf = zipfile.ZipFile('submissions/MyBot_%s.zip' % datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), 'w', zipfile.ZIP_DEFLATED)
     zipdir('hlt', zipf)
+    zipdir('bot', zipf)
     zipf.write("MyBot.py")
-    zipf.write("monitor.py")
-    zipf.write("manager.py")
-    zipf.write("drone.py")
+    zipf.write("install.sh")
+    zipf.write("setup.py")
+    zipf.write("navigation.pyx")
     zipf.close()

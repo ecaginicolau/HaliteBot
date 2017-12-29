@@ -1,7 +1,8 @@
-import hlt
 import logging
 from datetime import datetime
-from manager import Manager
+
+import hlt
+from bot.manager import Manager
 
 # This needs to be before the logger
 game = hlt.Game("Rampa-Managed-Nemesis")
@@ -52,6 +53,8 @@ try:
         # Order conqueror to conquer
         manager.order_conquerors()
         # Order attackers to attack
+        manager.order_assassin()
+        # Order attackers to attack
         manager.order_attacker()
         # Order defender to defend
         manager.order_defender()
@@ -71,3 +74,6 @@ try:
         # GAME END
 except:
     logging.exception("BIG CRASH")
+
+logger.error("total_old_duration: %s" % hlt.entity.total_old_navigation)
+logger.error("total_new_duration: %s" % hlt.entity.total_new_navigation)

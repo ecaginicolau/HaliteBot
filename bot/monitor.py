@@ -1,15 +1,12 @@
 import logging
-import math
+
+from navigation import Circle, calculate_distance_between
+
+from .hyperparameters import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT
 
 logger = logging.getLogger("monitor")
 
-# Hyperparameter for nemesis calculation
-# score increase with the number of ship, so SHIP_WEIGHT > 0
-SHIP_WEIGHT = 1.0
-# score increase with the number of planets, so PLANET_WEIGHT > 0
-PLANET_WEIGHT = 3.0
-# score decrease as the distance increase, so PROXIMITY_WEIGHT < 0
-PROXIMITY_WEIGHT = -0.02
+
 
 """
 # Monitor's job:
@@ -139,28 +136,16 @@ class Monitor(object):
         sum_x = 0
         sum_y = 0
         for ship in list_ship:
-            sum_x += ship.x
-            sum_y += ship.y
+            sum_x += ship.pos.x
+            sum_y += ship.pos.y
 
         center_x = sum_x / len(list_ship)
         center_y = sum_y / len(list_ship)
 
         logger.debug("Calculated the gravititinal center of player_id %s: %s,%s" % (player_id, center_x, center_y))
 
-        return center_x, center_y
+        return Circle(center_x, center_y)
 
-    def __distance(self, p1, p2):
-        """
-        Calculate the distance between 2 points, p1 and p2
-        :param p1: the point 1: tuple (x, y)
-        :param p2: the point 2: tuple (x, y)
-        :return:  the distance between the 2 points
-        """
-
-        # x = math.pow(p1[0] - p2[0],2)
-        # y = math.pow(p1[1] - p2[1],2)
-        # distance = math.sqrt(x + y)
-        return math.sqrt(math.pow(p1[0] - p2[0], 2) + math.pow(p1[1] - p2[1], 2))
 
     def find_nemesis(self):
         """
@@ -208,7 +193,7 @@ class Monitor(object):
             # Calculate the gravitational_center
             enemy_g_center = self.gravitational_center(enemy_id)
             # Calculate the distance
-            distance = self.__distance(team_g_center, enemy_g_center)
+            distance = calculate_distance_between(team_g_center, enemy_g_center)
             # Get the number of ships
             try:
                 nb_ship = len(self.__enemy_ship[enemy_id])

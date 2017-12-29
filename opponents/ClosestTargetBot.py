@@ -1,3 +1,5 @@
+import pyximport
+pyximport.install()
 import hlt
 import logging
 from collections import OrderedDict

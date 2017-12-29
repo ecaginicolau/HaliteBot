@@ -1,4 +1,5 @@
-from . import collision, entity
+from . import  entity
+from .collision import intersect_segment_circle
 
 
 class Map:
@@ -124,7 +125,7 @@ class Map:
                 return celestial_object
         return None
 
-    def obstacles_between(self, ship, target, ignore=()):
+    def obstacles_between(self, ship, target, ignore_ships=False, ignore_planets = False):
         """
         Check whether there is a straight-line path to the given point, without planetary obstacles in between.
 
@@ -135,13 +136,20 @@ class Map:
         :rtype: list[entity.Entity]
         """
         obstacles = []
-        entities = ([] if issubclass(entity.Planet, ignore) else self.all_planets()) \
-            + ([] if issubclass(entity.Ship, ignore) else self._all_ships())
-        for foreign_entity in entities:
-            if foreign_entity == ship or foreign_entity == target:
-                continue
-            if collision.intersect_segment_circle(ship, target, foreign_entity, fudge=ship.radius + 0.1):
-                obstacles.append(foreign_entity)
+
+        if not ignore_ships:
+            for enemy_ship in self._all_ships():
+                if enemy_ship == ship or enemy_ship == target:
+                    continue
+                if intersect_segment_circle(ship, target, enemy_ship, fudge=ship.pos.radius + 0.1):
+                    obstacles.append(enemy_ship)
+        if not ignore_planets:
+            for planet in self.all_planets():
+                if planet == ship or planet == target:
+                    continue
+                if intersect_segment_circle(ship, target, planet, fudge=ship.pos.radius + 0.1):
+                    obstacles.append(planet)
+
         return obstacles
 
 

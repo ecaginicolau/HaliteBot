@@ -1,17 +1,18 @@
 # Import & build cython at runtime
 import pyximport
-
 pyximport.install()
-from time import time
-from distance_python import calculate_distance_between as distance1, calculate_angle_between as angle1, \
-    closest_point_to as closest_point_to1, navigate as navigate1, intersect_segment_circle as intersect_segment_circle1
-from distance_cython import calculate_distance_between as distance2, Position, calculate_angle_between as angle2, \
+
+from bot.navigation import calculate_distance_between as distance2, Circle, calculate_angle_between as angle2, \
     closest_point_to as closest_point_to2, navigate as navigate2, intersect_segment_circle as intersect_segment_circle2
 
+from time import time
+from tests.distance_python import calculate_distance_between as distance1, calculate_angle_between as angle1, \
+    closest_point_to as closest_point_to1, navigate as navigate1, intersect_segment_circle as intersect_segment_circle1
 
-p1 = Position(0, 4, 3)
-p2 = Position(-4, 3 , 2)
-circle = Position( -2, 2, 1)
+
+p1 = Circle(60, 80, 3)
+p2 = Circle(180, 80, 2)
+circle = Circle(-2, 2, 1)
 
 
 nb = 1000000

@@ -16,25 +16,25 @@ def intersect_segment_circle(start, end, circle, *, fudge=0.5):
     # Parameterize the segment as start + t * (end - start),
     # and substitute into the equation of a circle
     # Solve for t
-    dx = end.x - start.x
-    dy = end.y - start.y
+    dx = end.pos.x - start.pos.x
+    dy = end.pos.y - start.pos.y
 
     a = dx**2 + dy**2
-    b = -2 * (start.x**2 - start.x*end.x - start.x*circle.x + end.x*circle.x +
-              start.y**2 - start.y*end.y - start.y*circle.y + end.y*circle.y)
-    c = (start.x - circle.x)**2 + (start.y - circle.y)**2
+    b = -2 * (start.pos.x**2 - start.pos.x*end.pos.x - start.pos.x*circle.pos.x + end.pos.x*circle.pos.x +
+              start.pos.y**2 - start.pos.y*end.pos.y - start.pos.y*circle.pos.y + end.pos.y*circle.pos.y)
+    c = (start.pos.x - circle.pos.x)**2 + (start.pos.y - circle.pos.y)**2
 
     if a == 0.0:
         # Start and end are the same point
-        return start.calculate_distance_between(circle) <= circle.radius + fudge
+        return start.calculate_distance_between(circle) <= circle.pos.radius + fudge
 
     # Time along segment when closest to the circle (vertex of the quadratic)
     t = min(-b / (2 * a), 1.0)
     if t < 0:
         return False
 
-    closest_x = start.x + dx * t
-    closest_y = start.y + dy * t
+    closest_x = start.pos.x + dx * t
+    closest_y = start.pos.y + dy * t
     closest_distance = Position(closest_x, closest_y).calculate_distance_between(circle)
 
-    return closest_distance <= circle.radius + fudge
+    return closest_distance <= circle.pos.radius + fudge
