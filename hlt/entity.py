@@ -3,12 +3,9 @@ import logging
 import math
 from enum import Enum
 
-from navigation import Circle, navigate, calculate_distance_between
-
+from bot.navigation import Circle, navigate, calculate_distance_between
 from . import constants
 
-total_old_navigation = 0
-total_new_navigation = 0
 
 class Entity:
     """
@@ -30,16 +27,6 @@ class Entity:
         self.health = health
         self.owner = player
         self.id = entity_id
-
-    def calculate_distance_between(self, target):
-        """
-        Calculates the distance between this object and the target.
-
-        :param Entity target: The target to get distance to.
-        :return: distance
-        :rtype: float
-        """
-        return calculate_distance_between(self.pos, target.pos)
 
     def calculate_angle_between(self, target):
         """
@@ -67,7 +54,6 @@ class Entity:
         y = target.pos.y + radius * math.sin(math.radians(angle))
         return Position(x, y)
 
-
     @abc.abstractmethod
     def _link(self, players, planets):
         pass
@@ -89,7 +75,8 @@ class Planet(Entity):
     :ivar y: The planet y-coordinate.
     :ivar radius: The planet radius.
     :ivar num_docking_spots: The max number of ships that can be docked.
-    :ivar current_production: How much production the planet has generated at the moment. Once it reaches the threshold, a ship will spawn and this will be reset.
+    :ivar current_production: How much production the planet has generated at the moment.
+                              Once it reaches the threshold, a ship will spawn and this will be reset.
     :ivar remaining_resources: The remaining production capacity of the planet.
     :ivar health: The planet's health.
     :ivar owner: The player ID of the owner, if any. If None, Entity is not owned.
@@ -135,6 +122,13 @@ class Planet(Entity):
         """
         return self.owner is not None
 
+    def nb_available_docking_spots(self):
+        """
+        Return the number of available spots to dock
+        :return:
+        """
+        return self.num_docking_spots - len(self._docked_ship_ids)
+
     def is_full(self):
         """
         Determines if the planet has been fully occupied (all possible ships are docked)
@@ -142,7 +136,28 @@ class Planet(Entity):
         :return: True if full, False otherwise.
         :rtype: bool
         """
-        return len(self._docked_ship_ids) >= self.num_docking_spots
+        return self.nb_available_docking_spots() <= 0
+
+    def is_free(self, player):
+        """
+        Check is the planet is free for this player
+        :param player:
+        :return:
+        """
+        # If the planet is empty, it's free
+        if not self.is_owned():
+            return True
+
+        # Check if the planet belong to some else
+        if self.owner != player:
+            return False
+
+        # Check if the planet is full
+        if self.is_full():
+            return False
+
+        # The planet is free!
+        return True
 
     def _link(self, players, planets):
         """
@@ -209,13 +224,13 @@ class Ship(Entity):
     A ship in the game.
 
     :ivar id: The ship ID.
-    :ivar x: The ship x-coordinate.
-    :ivar y: The ship y-coordinate.
-    :ivar radius: The ship radius.
+    :ivar pos: The ship position (Circle)
     :ivar health: The ship's remaining health.
     :ivar DockingStatus docking_status: The docking status (UNDOCKED, DOCKED, DOCKING, UNDOCKING)
     :ivar planet: The ID of the planet the ship is docked to, if applicable.
     :ivar owner: The player ID of the owner, if any. If None, Entity is not owned.
+    :ivar vel_x: the velocity of the ship in x axis
+    :ivar vel_y: the velocity of the ship in y axis
     """
 
     class DockingStatus(Enum):
@@ -234,6 +249,8 @@ class Ship(Entity):
         self.planet = planet if (docking_status is not Ship.DockingStatus.UNDOCKED) else None
         self._docking_progress = progress
         self._weapon_cooldown = cooldown
+        self.vel_x = vel_x
+        self.vel_y = vel_y
 
     def thrust(self, magnitude, angle):
         """
@@ -244,7 +261,7 @@ class Ship(Entity):
         :return: The command string to be passed to the Halite engine.
         :rtype: str
         """
-        #restrict magniture between 0 and MAX_SPEED
+        # restrict magnitude between 0 and MAX_SPEED
         if magnitude > constants.MAX_SPEED:
             logging.ERROR("RECEIVED an invalid thrust ! %s" % magnitude)
 
@@ -273,87 +290,29 @@ class Ship(Entity):
         """
         return "u {}".format(self.id)
 
-
-
-    def old_navigate(self, target, game_map, speed, max_corrections=90, angular_step=1,
-                 ignore_ships=False, ignore_planets=False):
+    def navigate(self, target, game_map, speed, max_corrections=90, angular_step=1, ignore_ships=False,
+                 ignore_planets=False, ignore_ghosts=False):
         """
-        Move a ship to a specific target position (Entity). It is recommended to place the position
-        itself here, else navigate will crash into the target. If avoid_obstacles is set to True (default)
-        will avoid obstacles on the way, with up to max_corrections corrections. Note that each correction accounts
-        for angular_step degrees difference, meaning that the algorithm will naively try max_correction degrees before giving
-        up (and returning None). The navigation will only consist of up to one command; call this method again
-        in the next turn to continue navigating to the position.
+        # Will calculate a valid path between the ship and the target
 
-        :param Entity target: The entity to which you will navigate
-        :param game_map.Map game_map: The map of the game, from which obstacles will be extracted
-        :param int speed: The (max) speed to navigate. If the obstacle is nearer, will adjust accordingly.
-        :param bool avoid_obstacles: Whether to avoid the obstacles in the way (simple pathfinding).
-        :param int max_corrections: The maximum number of degrees to deviate per turn while trying to pathfind. If exceeded returns None.
-        :param int angular_step: The degree difference to deviate if the original destination has obstacles
-        :param bool ignore_ships: Whether to ignore ships in calculations (this will make your movement faster, but more precarious)
-        :param bool ignore_planets: Whether to ignore planets in calculations (useful if you want to crash onto planets)
-        :return string: The command trying to be passed to the Halite engine or None if movement is not possible within max_corrections degrees.
-        :rtype: str
+        :param target: The target to move to
+        :param game_map: The game_map used to get the list of obstacles
+        :param speed: The maximum speed for this move
+        :param max_corrections: The number of retries in trajectory change
+        :param angular_step: The step in angle between each trajectory
+        :param ignore_ships: Should we ignore ships in obstacles list
+        :param ignore_planets:  Should we ignore planets in obstacles list
+        :param ignore_ghosts:  Should we ignore ghosts in obstacles list
+        :return:
         """
+        speed, angle, ghost = navigate(self.pos, target.pos, game_map, speed, max_corrections=max_corrections,
+                                       angular_step=angular_step, ignore_ships=ignore_ships,
+                                       ignore_planets=ignore_planets, ignore_ghosts=ignore_ghosts)
 
-        # Assumes a position, not planet (as it would go to the center of the planet otherwise)
-        if max_corrections <= 0:
-            return 0, 0
-        distance = self.calculate_distance_between(target)
-        angle = self.calculate_angle_between(target)
-
-        if not ignore_planets or not ignore_ships:
-            if game_map.obstacles_between(self, target, ignore_ships = ignore_ships, ignore_planets=ignore_planets):
-                new_target_dx = math.cos(math.radians(angle + angular_step)) * distance
-                new_target_dy = math.sin(math.radians(angle + angular_step)) * distance
-                new_target = Position(self.pos.x + new_target_dx, self.pos.y + new_target_dy)
-                return self.old_navigate(new_target, game_map, speed,  max_corrections - 1, angular_step,
-                                     ignore_ships = ignore_ships, ignore_planets = ignore_planets)
-        speed = speed if (distance >= speed) else distance
-        return speed, angle
-
-
-    def navigate(self, target, game_map, speed, max_corrections=90, angular_step=1,
-                 ignore_ships=False, ignore_planets=False):
-
-        """
-        global total_new_navigation, total_old_navigation
-
-        nb_run_navigation = 100
-
-        start_time=time()
-        i = 0
-        while i <nb_run_navigation:
-            i+=1
-            speed1, angle1 = self.old_navigate(target, game_map, speed, max_corrections, angular_step, ignore_ships=ignore_ships, ignore_planets=ignore_planets)
-        end_time = time()
-        duration = end_time - start_time
-        total_old_navigation += duration
-        logging.warning('old_navigate duration : %s' % duration)
-
-        start_time = time()
-        i = 0
-        while i < nb_run_navigation:
-            i += 1
-        end_time = time()
-        duration = end_time - start_time
-        total_new_navigation += duration
-
-        logging.warning('new_navigate duration : %s' % duration)
-
-        if speed1 != speed2:
-            logging.warning("Speeds are different: %s %s" % (speed1, speed2))
-            logging.warning("Angles are different: %s %s" % (angle1, angle2))
-        """
-
-        speed, angle = navigate(self.pos, target.pos, game_map, speed, max_corrections=max_corrections,
-                                angular_step=angular_step, ignore_ships=ignore_ships, ignore_planets=ignore_planets)
-
+        if ghost is not None:
+            game_map.add_ghost(ghost)
 
         return self.thrust(speed, angle)
-
-
 
     def can_dock(self, planet):
         """
@@ -363,7 +322,8 @@ class Ship(Entity):
         :return: True if can dock, False otherwise
         :rtype: bool
         """
-        return self.calculate_distance_between(planet) <= planet.pos.radius + constants.DOCK_RADIUS + constants.SHIP_RADIUS
+        return calculate_distance_between(self.pos, planet.pos) \
+               <= planet.pos.radius + constants.DOCK_RADIUS + constants.SHIP_RADIUS
 
     def _link(self, players, planets):
         """
@@ -425,9 +385,7 @@ class Position(Entity):
     A simple wrapper for a coordinate. Intended to be passed to some functions in place of a ship or planet.
 
     :ivar id: Unused
-    :ivar x: The x-coordinate.
-    :ivar y: The y-coordinate.
-    :ivar radius: The position's radius (should be 0).
+    :ivar pos: The position in Circle
     :ivar health: Unused.
     :ivar owner: Unused.
     """

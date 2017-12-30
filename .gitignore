@@ -1,2 +1,12 @@
 /replays/*.hlt
 /log/*.log
+/hlt/__pycache__/*.pyc
+/*.log
+*.pyc
+*.exp
+*.lib
+*.obj
+/submissions/*.zip
+/submissions/old/*.zip
+*.c
+*.pyd

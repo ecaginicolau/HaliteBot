@@ -2,10 +2,12 @@ import hlt
 import logging
 from enum import Enum
 
-logger = logging.getLogger("drone")
+from bot.navigation import calculate_distance_between
+from bot.settings import MAX_TURN_DEFENDER
+from hlt import constants
+from hlt.entity import Ship
 
-# Nb of turn the ship is set to defender mode
-MAX_TURN_DEFENDER = 5
+logger = logging.getLogger("drone")
 
 
 class DroneRole(Enum):
@@ -70,6 +72,15 @@ class Drone(object):
         self.target_type = None
         # Store the distance between the drone and its target
         self.target_distance = None
+        # Store all enemy ships by distance
+        self.__enemy_by_distance = []
+        # Store all planet by distance
+        self.__planet_by_distance = []
+        # Store the distance of all enemy ships, indexed by ship.id
+        self.__enemy_distance = {}
+        # Store the distance of all planets, indexed by planet.id
+        self.__planet_distance = {}
+
 
     def update_ship(self, ship):
         """
@@ -106,6 +117,40 @@ class Drone(object):
         self.reset_target()
         self.target_type = TargetType.UNDOCKING
 
+    def can_dock(self, planet):
+        """
+        Complete lookup if the shup can dock
+            - planet empty or owned
+            - planet not full
+            - planet at correct distance
+        :param planet:
+        :return: bool, true if can dock
+        """
+        logger.debug("drone.can_dock ship.id: %s, planet.id: %s" % (self.ship.id, planet.id))
+        # Make sure the planet is free
+        if planet.owner is not None and planet.owner != self.ship.owner:
+            logger.debug("can't dock, the planet has an owner other than us")
+            return False
+        # Make sure the planet is not full
+        if planet.is_full():
+            logger.debug("can't dock, the planet is full")
+            return False
+        # Make sure we are not too far
+        if self.__planet_distance[planet.id] > planet.pos.radius + constants.DOCK_RADIUS + constants.SHIP_RADIUS:
+            logger.debug("can't dock, the planet is too far")
+            return False
+
+        logger.debug("CAN dock")
+        #If we've arrived up to here, it means we can dock
+        return True
+
+    def update_target(self, target):
+        if target is None:
+            self.reset_target()
+            return
+        self.target = target
+        self.target_distance = calculate_distance_between(self.ship.pos, target.pos)
+
     def assign_target(self, target, distance=None, target_type=None):
         """
         Assign a new target to to the drone
@@ -122,7 +167,7 @@ class Drone(object):
 
         # If the distance parameter is None, calculate it here (save some computation time)
         if distance is None:
-            distance = self.ship.calculate_distance_between(target)
+            distance = calculate_distance_between(self.ship.pos, target.pos)
 
         # Store the distance between the drone and its target
         self.target_distance = distance
@@ -148,8 +193,6 @@ class Drone(object):
         :return: the previous role
         """
         return self.__previous_role
-
-
 
     def get_role(self):
         """
@@ -191,3 +234,133 @@ class Drone(object):
 
     # Create the properties
     role = property(get_role, set_role)
+
+    def get_closest_ship(self, player_id=None, docked_only=False):
+        """
+        Return the closest ship, if a player_id is sent then return the closest ship of this player
+        :param player_id: the player 's ship we are looking for, None for all ships
+        :param docked_only: Only look for docked ships
+        :return: a single ship
+        """
+        for distance, enemy_ship in self.__enemy_by_distance:
+            # If we are looking for docked only ships
+            if docked_only:
+                # If the enemy ship is currently undocked, skip to next ship
+                if enemy_ship.docking_status == Ship.DockingStatus.UNDOCKED:
+                    # Skip to next ship
+                    continue
+
+            # If we are looking for a specific enemy's ships
+            if player_id is not None:
+                # Check if the ship's owner match the enemy we are looking after
+                if player_id != enemy_ship.owner.id:
+                    # SKip to next ship if the owners doesn't match
+                    continue
+            # If we've made up to here it means we have found the correct ship!
+            return distance, enemy_ship
+
+    def calculate_all_ships_distance(self, all_ships):
+        """
+        Calculate all distance once and for all between all ships
+        Will probaly have collision issue with distance if 2 target are at the same distance of this ship
+        :param all_ships:
+        :return:
+        """
+        self.__enemy_by_distance = []
+        self.__enemy_distance = {}
+        for _, ship in all_ships.items():
+            # Don't calculate distance with ship of our team
+            if ship.owner == self.ship.owner:
+                # Ship to next ship
+                continue
+            # Calculate the distance between the drone and this ship
+            distance = calculate_distance_between(self.ship.pos, ship.pos)
+            # Store the enemy's distance for faster lookup
+            self.__enemy_distance[ship.id] = distance
+            # Append to the list of all distance
+            self.__enemy_by_distance.append((distance, ship))
+
+        # Sort by distance
+        self.__enemy_by_distance = sorted(self.__enemy_by_distance, key=lambda l: l[0])
+
+    def get_closest_empty_planet(self):
+        """
+        Get the closest empty planet
+        :return: distance, planet
+        """
+        for distance, planet in self.__planet_by_distance:
+            # Check if it's an empty planet
+            if not planet.is_owned():
+                return distance, planet
+        # There are no empty planet left
+        return None, None
+
+    def get_closest_owned(self):
+        """
+        Return our closest planet
+        :return: distance, planet
+        """
+        for distance, planet in self.__planet_by_distance:
+            # Check if it's our planet
+            if planet.owner == self.ship.owner:
+                return distance, planet
+        # We don't have an owned planet yet
+        return None, None
+
+    def calculate_all_planets_distance(self, all_planets):
+        self.__planet_by_distance = []
+        self.__planet_distance =  {}
+        for planet_id, planet in all_planets.items():
+            # Calculate the distance between the drone and this ship
+            distance = calculate_distance_between(self.ship.pos, planet.pos)
+            # Store the distance for faster lookup
+            self.__planet_distance[planet.id] = distance
+            # Append to the list of all distance
+            self.__planet_by_distance.append((distance, planet))
+
+        # Sort by distance
+        self.__planet_by_distance = sorted(self.__planet_by_distance, key=lambda l: l[0])
+
+    def get_empty_planet_by_distance(self):
+        list_distance = []
+        for distance, planet in self.__planet_by_distance:
+            if not planet.is_owned():
+                list_distance.append((distance, planet))
+        return list_distance
+
+    def get_planet_by_distance(self):
+        return self.__enemy_by_distance
+
+    def get_free_planet_by_distance(self):
+        """
+        return the list of planet (empty or owned) and not full by distance
+        :return: list of free planet by distance
+        """
+        list_distance = []
+        for distance, planet in self.__planet_by_distance:
+            # Make sure the planet is free
+            if planet.is_free(self.ship.owner):
+                list_distance.append((distance, planet))
+        return list_distance
+
+    def get_free_planet_by_score(self):
+        """
+        return the list of planet (empty or owned) and not full by distance
+        :return: list of free planet by distance
+        """
+        list_score = []
+        for distance, planet in self.__planet_by_distance:
+            # Make sure the planet is free
+            if planet.is_free(self.ship.owner):
+                score = distance * planet.nb_available_docking_spots()
+                list_score.append((score, planet))
+        return list_score
+
+
+
+    def get_closest_free_planet(self):
+        for distance, planet in self.__planet_by_distance:
+            if not planet.is_owned() or planet.owner == self.ship.owner:
+                return distance, planet
+        return None, None
+

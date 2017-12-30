@@ -4,7 +4,7 @@ import zipfile
 from datetime import datetime
 
 def is_exclude(file):
-    for ext in [".c","pyc",".pyd","exp","lib","obj"]:
+    for ext in [".c","pyc",".pyd","exp","lib","obj",".log"]:
         if file.endswith(ext):
             return True
     return False
@@ -20,8 +20,13 @@ if __name__ == '__main__':
     zipf = zipfile.ZipFile('submissions/MyBot_%s.zip' % datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), 'w', zipfile.ZIP_DEFLATED)
     zipdir('hlt', zipf)
     zipdir('bot', zipf)
+    zipdir('log', zipf)
     zipf.write("MyBot.py")
     zipf.write("install.sh")
+    #zipf.write("manager.py")
+    #zipf.write("monitor.py")
+    #zipf.write("settings.py")
+    #zipf.write("drone.py")
+    #zipf.write("navigation.pyx")
     zipf.write("setup.py")
-    zipf.write("navigation.pyx")
     zipf.close()

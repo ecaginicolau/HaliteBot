@@ -143,7 +143,7 @@ def obstacles_between(ship, target,game_map, ignore_ships = False, ignore_planet
     if not ignore_planets :
         entities.extend(game_map.all_planets())
     if not ignore_ships :
-        entities.extend(game_map._all_ships())
+        entities.extend(game_map.all_ships())
     for foreign_entity in entities:
         if foreign_entity == ship or foreign_entity == target:
             continue

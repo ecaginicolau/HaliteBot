@@ -1,3 +1,4 @@
+from bot.navigation import calculate_distance_between
 from . import  entity
 from .collision import intersect_segment_circle
 
@@ -22,6 +23,7 @@ class Map:
         self.height = height
         self._players = {}
         self._planets = {}
+        self._ghosts = {}
 
     def get_me(self):
         """
@@ -67,10 +69,10 @@ class Map:
         :rtype: dict
         """
         result = {}
-        for foreign_entity in self._all_ships() + self.all_planets():
+        for foreign_entity in self.all_ships() + self.all_planets():
             if entity == foreign_entity:
                 continue
-            result.setdefault(entity.calculate_distance_between(foreign_entity), []).append(foreign_entity)
+            result.setdefault(calculate_distance_between(entity.pos, foreign_entity.pos), []).append(foreign_entity)
         return result
 
     def _link(self):
@@ -79,7 +81,7 @@ class Map:
 
         :return:
         """
-        for celestial_object in self.all_planets() + self._all_ships():
+        for celestial_object in self.all_planets() + self.all_ships():
             celestial_object._link(self._players, self._planets)
 
     def _parse(self, map_string):
@@ -91,13 +93,23 @@ class Map:
         """
         tokens = map_string.split()
 
+        self._ghosts = []
         self._players, tokens = Player._parse(tokens)
         self._planets, tokens = entity.Planet._parse(tokens)
 
         assert(len(tokens) == 0)  # There should be no remaining tokens at this point
         self._link()
 
-    def _all_ships(self):
+    def all_ghost(self):
+        """
+        Helper function to extract all ghosts
+
+        :return: List of ghost
+        :rtype: List[Circle]
+        """
+        return self._ghosts
+
+    def all_ships(self):
         """
         Helper function to extract all ships from all players
 
@@ -117,7 +129,7 @@ class Map:
         :return: The colliding entity if so, else None.
         :rtype: entity.Entity
         """
-        for celestial_object in self._all_ships() + self.all_planets():
+        for celestial_object in self.all_ships() + self.all_planets():
             if celestial_object is target:
                 continue
             d = celestial_object.calculate_distance_between(target)
@@ -138,7 +150,7 @@ class Map:
         obstacles = []
 
         if not ignore_ships:
-            for enemy_ship in self._all_ships():
+            for enemy_ship in self.all_ships():
                 if enemy_ship == ship or enemy_ship == target:
                     continue
                 if intersect_segment_circle(ship, target, enemy_ship, fudge=ship.pos.radius + 0.1):
@@ -152,6 +164,8 @@ class Map:
 
         return obstacles
 
+    def add_ghost(self,ghost):
+        self._ghosts.append(ghost)
 
 class Player:
     """
@@ -179,6 +193,8 @@ class Player:
         :rtype: entity.Ship
         """
         return self._ships.get(ship_id)
+
+
 
     @staticmethod
     def _parse_single(tokens):

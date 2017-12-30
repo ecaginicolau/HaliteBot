@@ -1,5 +1,5 @@
 @echo off
-SET PYTHONPATH=%cd%
+rem SET PYTHONPATH=%cd%
 echo [Building]
 python setup.py build_ext --inplace
 if errorlevel 1 (

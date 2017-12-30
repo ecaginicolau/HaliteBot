@@ -3,5 +3,5 @@ from Cython.Build import cythonize
 
 setup(
     name = "RampaBot",
-    ext_modules = cythonize('navigation.pyx'),
+    ext_modules = cythonize('bot/navigation.pyx'),
 )

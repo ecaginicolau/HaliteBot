@@ -1,34 +1,14 @@
+# Python imports
 import logging
-import math
 from datetime import datetime
-
-from .monitor import Monitor
-
-from .drone import DroneRole, TargetType, Drone
+# Bot imports
+from bot.monitor import Monitor
+from bot.drone import DroneRole, TargetType, Drone
+from bot.settings import MIN_SHIP_ATTACKERS, MAX_RATIO_SHIP_ATTACKERS, DEFENDER_RADIUS, NB_SHIP_THRESHOLD,\
+    MAX_TURN_DURATION, MINER_CAN_DEFEND, MINER_DEFENDER_RADIUS
+# hlt imports
 from hlt.constants import *
 from hlt.entity import Ship
-
-logger = logging.getLogger("manager")
-
-# Some global
-#Don't calculate ratio before this nb
-MIN_SHIP_PER_PLANET = 2
-# Max ratio of ship sent to the same planet, avoid all ship going to the same planet
-MAX_RATIO_SHIP_PER_PLANET = 0.5
-# Always try to have at least 1 ship attacking (if not alone?)
-MIN_SHIP_ATTACKERS = 1
-# Even if there are still some available planet, send a portion of the ship to attack
-MAX_RATIO_SHIP_ATTACKERS = 0.25
-# NB of docked ship per planet
-MAX_NB_DOCKED_SHIP = 5
-# Radius inside which an enemy must be for a drone to become a defender
-DEFENDER_RADIUS = 10
-# Special radius for miner to react faster
-MINER_DEFENDER_RADIUS = 10
-# If the turn takes more than this, just exit
-MAX_TURN_DURATION = 1.8
-# Arbitrary threshold after which we need to sort ship by distance
-NB_SHIP_THRESHOLD = 130
 
 """
 # Manager's job:
@@ -61,26 +41,12 @@ class Manager(object):
         for role in DroneRole:
             self.__all_role_drones[role] = []
 
-        # Will store all ships in dictionary, should be updated every turn
-        self.__enemy_ships_dict = {}
-        # Will store team ships in dictionary, should be updated every turn
-        self.__team_ships_dict = {}
-
         # Store the game_map
         self.game_map = None
 
-        # Store planets owner by enemies
-        self.__enemy_planets = []
-
-        # Store planet owned by the player
-        self.__team_planets = []
-
-        # Store planets empty as dictionary for fast lookup, index as planet.id
-        self.__empty_planets = {}
-
         # Store the start_time of the current_turn
         self.turn_start_time = None
-        logger.info("New manager created for player: %s" % self.player_id)
+        logging.info("New manager created for player: %s" % self.player_id)
 
     def update_game_map(self, game_map, start_time):
         """
@@ -96,25 +62,8 @@ class Manager(object):
         self.turn_start_time = start_time
         # update the game map itself
         self.game_map = game_map
-        # Reset turn's variable
-        self.__enemy_planets = []
-        self.__team_planets = []
-        self.__empty_planets = {}
-        # Loop through all planet, look for empty, enemy or team planets
-        for planet in self.game_map.all_planets():
-            if not planet.is_owned():
-                self.__empty_planets[planet.id] = planet
-            else:
-                if planet.owner.id == self.player_id:
-                    self.__team_planets.append(planet)
-                else:
-                    self.__enemy_planets.append(planet)
 
-        logger.info("Empty planets: %s, Owned planets: %s, Enemy planets: %s" % (len(self.__empty_planets),
-                                                                                 len(self.__team_planets),
-                                                                                 len(self.__enemy_planets)))
-
-    # Return the role of  asingle ship
+    # Return the role of a single ship
     def get_ship_role(self, ship_id):
         try:
             return self.__all_drones[ship_id].role
@@ -143,7 +92,7 @@ class Manager(object):
         try:
             drone = self.__all_drones[ship.id]
             # Remove the drone from the old list
-            logger.warning("Drone already exist, changing role instead")
+            logging.warning("Drone already exist, changing role instead")
             self.change_drone_role(drone, role)
         except KeyError:
             self.__all_drones[ship.id] = Drone(ship=ship, role=role)
@@ -151,7 +100,7 @@ class Manager(object):
                 self.__all_role_drones[role].append(ship.id)
             except KeyError:
                 self.__all_role_drones[role] = [ship.id]
-            logger.info("Added a new ship with the role: %s" % self.get_ship_role(ship.id))
+            logging.info("Added a new ship with the role: %s" % self.get_ship_role(ship.id))
 
     def check_for_dead_drones(self):
         """
@@ -164,7 +113,7 @@ class Manager(object):
             drone = self.__all_drones[ship_id]
             try:
                 # If we can find the ship
-                ship = self.__team_ships_dict[ship_id]
+                ship = self.monitor.get_ship(ship_id)
                 # Update it in the drone
                 drone.update_ship(ship)
             except KeyError:
@@ -176,27 +125,7 @@ class Manager(object):
                 self.__all_role_drones[old_role].remove(ship_id)
                 # Remove from the list of all drone
                 del self.__all_drones[ship_id]
-        logger.info("In total %s drone died" % self.__nb_dead_drone)
-
-    def update_list_ship(self):
-        """
-        [EVERY TURN]
-        Get the new list of ship for this turn
-            - Update both enemy & team list of ship into a dictionnay indexed by ship.id
-        :return:
-        """
-
-        list_ships = self.game_map._all_ships()
-        self.__enemy_ships_dict = {}
-        self.__team_ships_dict = {}
-        for ship in list_ships:
-            if ship.owner.id == self.player_id:
-                self.__team_ships_dict[ship.id] = ship
-            else:
-                self.__enemy_ships_dict[ship.id] = ship
-        logger.info("Found %s ship in my team" % len(self.__team_ships_dict))
-        logger.info("Found %s ship in enemy team" % len(self.__enemy_ships_dict))
-        logger.info("Found a total  of %s ship" % (len(self.__enemy_ships_dict) + len(self.__team_ships_dict)))
+        logging.info("In total %s drone died" % self.__nb_dead_drone)
 
     def check_for_new_ship(self):
         """
@@ -206,10 +135,23 @@ class Manager(object):
             - At the end, no unknown drone should remain
         :return:
         """
-        for ship_id, ship in self.__team_ships_dict.items():
+
+        for ship_id in self.monitor.get_team_ships():
+            # Get the ship
+            ship = self.monitor.get_ship(ship_id)
             # If the current ship has no role, assign it as IDLE (new ship)
             if self.get_ship_role(ship_id) == DroneRole.UNKNOWN:
                 self.add_ship(ship=ship, role=DroneRole.IDLE)
+
+    def calculate_all_drones_distance(self):
+        """
+        Calculate between all drones and all ships, once and for all!
+        :return:
+        """
+        for _, drone in self.__all_drones.items():
+            if drone.role != DroneRole.MINER:
+                drone.calculate_all_ships_distance(self.monitor.get_all_ships_dict())
+                drone.calculate_all_planets_distance(self.monitor.get_all_planets_dict())
 
     def check_defender_timer(self):
         """
@@ -233,6 +175,7 @@ class Manager(object):
                 else:
                     # Change if back to its previous role
                     self.change_drone_role(drone, previous_role)
+
     def check_damaged_drone(self):
         """
         [EVERY TURN]
@@ -243,12 +186,14 @@ class Manager(object):
         nb_damaged = 0
         for ship_id, drone in self.__all_drones.items():
             drone = self.__all_drones[ship_id]
-            if self.__team_ships_dict[ship_id].health != drone.max_health:
-                # If it's not a defender, make it a defender
-                if drone.role != DroneRole.DEFENDER:
-                    nb_damaged += 1
-                    self.change_drone_role(drone, DroneRole.DEFENDER)
-        logger.info("Found %s damaged ship" % nb_damaged)
+            if self.monitor.get_ship(ship_id).health != drone.max_health:
+                # Miner should never move
+                if drone.role != DroneRole.MINER:
+                    # If it's not a defender, make it a defender
+                    if drone.role != DroneRole.DEFENDER:
+                        nb_damaged += 1
+                        self.change_drone_role(drone, DroneRole.DEFENDER)
+        logging.info("Found %s damaged ship" % nb_damaged)
 
     def role_status(self):
         """
@@ -258,7 +203,7 @@ class Manager(object):
         role_counter = {}
         for role in DroneRole:
             role_counter[role] = self.nb_drone_role(role)
-            logger.info("Role: %s, count: %s" % (role, role_counter[role]))
+            logging.info("Role: %s, count: %s" % (role, role_counter[role]))
         return role_counter
 
     def nb_drone_role(self, role):
@@ -274,6 +219,7 @@ class Manager(object):
 
     def nb_offense(self):
         return self.nb_drone_role(DroneRole.ATTACKER) + self.nb_drone_role(DroneRole.ASSASSIN)
+
     def ratio_offense(self):
 
         """
@@ -283,7 +229,7 @@ class Manager(object):
             self.nb_drone_role(DroneRole.ATTACKER) + self.nb_drone_role(DroneRole.ASSASSIN) + self.nb_drone_role(
                 DroneRole.CONQUEROR) + self.nb_drone_role(DroneRole.IDLE))
         """
-        current_ratio = self.nb_offense() /float(len(self.__all_drones))
+        current_ratio = self.nb_offense() / float(len(self.__all_drones))
 
         return current_ratio
 
@@ -300,14 +246,14 @@ class Manager(object):
         # If there are Idle drones
         if self.nb_drone_role(DroneRole.IDLE) > 0:
             # First:  There are still empty planets:
-            if len(self.__empty_planets) > 0:
+            if self.monitor.nb_empty_planets() > 0:
                 """
                 #Give the Attacker/Assassin role
                 """
                 # Calculate the ratio of attacker / total drone
-                logger.debug("current_ratio: %s" % self.ratio_offense())
+                logging.debug("current_ratio: %s" % self.ratio_offense())
                 # First make sure there are enough attacker
-                while ((self.nb_offense() < MIN_SHIP_ATTACKERS) or ( self.ratio_offense() < MAX_RATIO_SHIP_ATTACKERS)) \
+                while ((self.nb_offense() < MIN_SHIP_ATTACKERS) or (self.ratio_offense() < MAX_RATIO_SHIP_ATTACKERS)) \
                         and (self.nb_drone_role(DroneRole.IDLE) > 0):
                     # Change an IDLE Drone to attacker
                     # Pick a IDLE drone
@@ -315,32 +261,30 @@ class Manager(object):
                     ship_id = self.__all_role_drones[DroneRole.IDLE][0]
                     drone = self.__all_drones[ship_id]
 
-                    #If there are no assassin, make an assassin
+                    # If there are no assassin, make an assassin
                     if self.nb_drone_role(DroneRole.ASSASSIN) == 0:
-                        #Create an assassin
+                        # Create an assassin
                         self.change_drone_role(drone, DroneRole.ATTACKER)
                     else:
-                        #If there are more assassin than attacker
+                        # If there are more assassin than attacker
                         if self.nb_drone_role(DroneRole.ASSASSIN) >= self.nb_drone_role(DroneRole.ATTACKER):
-                            #Create an assassin
+                            # Create an assassin
                             self.change_drone_role(drone, DroneRole.ATTACKER)
                         else:
-                            #Else create an attacker
+                            # Else create an attacker
                             self.change_drone_role(drone, DroneRole.ASSASSIN)
                     # Calculate the ratio of attacker / total drone
-                    logger.debug("current_ratio: %s" % self.ratio_offense())
+                    logging.debug("current_ratio: %s" % self.ratio_offense())
 
                 """
                 #Give the Conqueror role
                 """
                 # Affect all remaining idle to conqueror role
-                logger.debug("OLD nb_conqueror: %s" % self.nb_drone_role(DroneRole.CONQUEROR))
                 # Copythe list of ship_id for modification
                 list_ship_id = list(self.__all_role_drones[DroneRole.IDLE])
                 for ship_id in list_ship_id:
                     drone = self.__all_drones[ship_id]
                     self.change_drone_role(drone, DroneRole.CONQUEROR)
-                logger.debug("NEW nb_conqueror: %s" % self.nb_drone_role(DroneRole.CONQUEROR))
             # Else: there are no empty planets : default role = ATTACKER
             else:
                 """
@@ -353,7 +297,6 @@ class Manager(object):
                     drone = self.__all_drones[ship_id]
                     self.change_drone_role(drone, DroneRole.ATTACKER)
         self.role_status()
-
 
     def check_drone_target(self):
         """
@@ -372,7 +315,7 @@ class Manager(object):
                 if drone.target_type == TargetType.SHIP:
                     # Make sure the enemy ship is still alive, update the target if so
                     try:
-                        drone.target = self.__enemy_ships_dict[drone.target_id]
+                        drone.update_target(self.monitor.get_ship(drone.target_id))
                     except KeyError:
                         # The target is dead, reset the target
                         drone.reset_target()
@@ -380,43 +323,24 @@ class Manager(object):
                         continue
                 # If the drone is currently targeting a planet
                 if drone.target_type == TargetType.PLANET:
-                    # Check if the planet is still empty Update the planet's target
+                    # Check if the planet is still free
                     try:
-                        drone.target = self.__empty_planets[drone.target_id]
+                        target = self.monitor.get_planet(drone.target_id)
+                        # Check if the planet is still free
+                        if not target.is_free(drone.ship.owner):
+                            # The target is not free anymore
+                            drone.reset_target()
+                            # Skip to next ship
+                            continue
+                        else:
+                            # Update the target
+                            drone.update_target(target)
+
                     except KeyError:
-                        # The planet is not empty anymore, reset the target
+                        # The planet is destroyed?
                         drone.reset_target()
                         # Skip to next ship
                         continue
-
-    def __look_for_closest_ship(self, ship, player_id=None, docked_only = False):
-        """
-        This function will loop through all enemy ship to look for the closest ship
-        :param ship:
-        :param player_id: if playerid is not None : look only for enemy ship of this player
-        :return: both the target and the distance between the ship and the target (for computation optimization)
-        """
-        # set min_distance to an arbitrary huge number
-        min_distance = 9999
-        # Prepare the target
-        target = None
-        # Loop through all enemy ship
-        for enemy_id, enemy_ship in self.__enemy_ships_dict.items():
-            if docked_only:
-                if enemy_ship.docking_status == Ship.DockingStatus.UNDOCKED:
-                    continue
-            # If we don't need a specific player ship or if the ship is owned by the correct player
-            if (player_id is None) or (enemy_ship.owner.id == player_id):
-                # Calculate the distance
-                distance = ship.calculate_distance_between(enemy_ship)
-                # If the distance is smaller than the current target
-                if distance < min_distance:
-                    # Update the distance
-                    min_distance = distance
-                    # update the target
-                    target = enemy_ship
-        # In the end return the target
-        return target, min_distance
 
     def __navigate_target(self, ship, target):
         """
@@ -424,21 +348,22 @@ class Manager(object):
         :param ship:
         :return: the navigate command
         """
-        logger.debug("Going to generate a navigate command between ship %s and target %s" % (ship.id, target.id))
+        logging.debug("Going to generate a navigate command between ship %s and target %s" % (ship.id, target.id))
 
         closest = ship.closest_point_to(target)
-        logger.debug("Closest point to target: %s" % closest)
+        logging.debug("Closest point to target: %s" % closest)
         navigate_command = None
         if target is not None:
             navigate_command = ship.navigate(
                 closest,
                 self.game_map,
                 speed=int(MAX_SPEED),
-                angular_step=5,
+                angular_step=1,
                 ignore_planets=False,
                 ignore_ships=False,
+                ignore_ghosts=False,
             )
-            logger.info("Navigation command: %s" % navigate_command)
+            logging.info("Navigation command: %s" % navigate_command)
 
         return navigate_command
 
@@ -458,6 +383,25 @@ class Manager(object):
         """
         return self.__navigate_target(ship, target)
 
+    def check_drone_defense(self, drone):
+        """
+        Check if there is an enemy inside the defender radius of a drone, make it a defender if so
+        :param drone:
+        :return: true if a drone has become a defender
+        """
+
+        # First make sure that the drone has still some defender_timer left
+        if drone.defender_timer <= 0:
+            return False
+
+        # Check if enemies are in the radius of defense
+        # Get the distance of the closest enemy ship
+        distance, ship = drone.get_closest_ship()
+        if distance <= MINER_DEFENDER_RADIUS:
+            # Change drone role to DEFENDER
+            self.change_drone_role(drone, DroneRole.DEFENDER)
+            return True
+        return False
 
     def order_assassin(self):
         """
@@ -479,16 +423,14 @@ class Manager(object):
             # Get the drone
             drone = self.__all_drones[ship_id]
 
-
             # Look for the closest ship of our nemesis
-            target, distance = self.__look_for_closest_ship(drone.ship, nemesis, docked_only=True)
+            distance, enemy_ship = drone.get_closest_ship(player_id=nemesis, docked_only=True)
             # Assign the new target, if any
-            if target is not None:
-                drone.assign_target(target, distance, target_type=TargetType.SHIP)
-            #Convert to ATTACKER if no target
+            if enemy_ship is not None:
+                drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+            # Convert to ATTACKER if no target
             else:
-                self.change_drone_role(drone,DroneRole.ATTACKER)
-
+                self.change_drone_role(drone, DroneRole.ATTACKER)
 
     def order_attacker(self):
         """
@@ -510,21 +452,20 @@ class Manager(object):
             drone = self.__all_drones[ship_id]
 
             # Look for the closest ship overall
-            target, distance = self.__look_for_closest_ship(drone.ship)
+            distance, enemy_ship = drone.get_closest_ship()
 
-            # If the drone already has a target, only react to very close ship
-            if drone.target is not None:
-                #If the closest ship is closest than defender radius, chance target
-                if distance < DEFENDER_RADIUS :
-                    drone.assign_target(target, distance, target_type=TargetType.SHIP)
-                # New target or not: Skip to next drone
+            # If the closest ship is closest than defender radius, chance target
+            if distance < DEFENDER_RADIUS:
+                drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+                # Skip to next drone
                 continue
 
-            # Look for the closest ship of our nemesis
-            target, distance = self.__look_for_closest_ship(drone.ship, nemesis)
-            # Assign the new target, if any
-            if target is not None:
-                drone.assign_target(target, distance, target_type=TargetType.SHIP)
+            # If the drone has currently no target, look for one
+            if drone.target is None:
+                # Look for the closest ship of our nemesis
+                distance, enemy_ship = drone.get_closest_ship(player_id=nemesis)
+                # Assign the new target, if any
+                drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
 
     def order_miner(self):
         """
@@ -535,167 +476,120 @@ class Manager(object):
             - Drone get no target with this IA
         :return:
         """
-        # Loop through all drone to look for an enemy
-        for ship_id in list(self.__all_role_drones[DroneRole.MINER]):
-            #Do nothing
-            continue
-            """
-            # Get the drone
-            drone = self.__all_drones[ship_id]
-
-            # Check if enemies are in the radius of defense
-            # If the drone has not exhausted its defender_time
-            if drone.defender_timer > 0:
-                became_defender = False
-                for enemy_id, enemy in self.__enemy_ships_dict.items():
-                    # Calculate the distance with each enemy ship
-                    distance = drone.ship.calculate_distance_between(enemy)
-                    # If an enemy ship is too close enter defender role
-                    if distance <= MINER_DEFENDER_RADIUS:
-                        # Change drone role to DEFENDER
-                        self.change_drone_role(drone, DroneRole.DEFENDER)
-                        became_defender = True
-                        # No need to look for more ships
-                        break
-                # Make sure to no run conqueror orders if it became a defender
-                if became_defender:
-                    # Skip to next ship
-                    continue
-            """
+        # By default miner can't defend
+        if MINER_CAN_DEFEND:
+            # Loop through all drone to look for an enemy
+            for ship_id in list(self.__all_role_drones[DroneRole.MINER]):
+                # Get the drone
+                drone = self.__all_drones[ship_id]
+                # Check if the drone needs to become a defender
+                self.check_drone_defense(drone)
 
     # Give an order to every conquerors
     def order_conquerors(self):
         """
         [EVERY TURN]
         Main IA function for all drone with CONQUEROR role
+        The main objective for a CONQUEROR is to become a MINER
             - Loop through all Conquerors
             - Check if an enemy ship is close, switch to defender mode if it's the case
             - Don't change drone with valid target
-            - Look for a target for drone without one: closest empty planet that is not full
-            - If no empty planet left: convert the drone to an attacker
+            - Look for a target for drone without one: closest free planet that is not full
+            - If no Free planet left: convert the drone to an attacker
             - At the end every conquerors should have a target + some of them can be converted to attackers
         :return:
         """
 
-        # Store the number of ship per planet, to avoid crowded planets
-        nb_ship_per_planet = {}
+        list_free_planet = self.monitor.get_free_planets()
+        logging.info("Found %s free planets" % len(list_free_planet))
 
-        # Fast/Easy code : there are no empty planets convert all drone to Attackers
+        # Keep the number of docking spot available by free planet
+        dic_nb_available_spot = {}
+        for planet in list_free_planet:
+            dic_nb_available_spot[planet.id] = planet.nb_available_docking_spots()
+
+        # Fast/Easy code : there are no free planets convert all drone to Attackers
         # Could be handled by folling code but much slower
-        if len(self.__empty_planets) == 0:
+        if len(list_free_planet) == 0:
             """
             #Give the Attackers role
             """
             # Affect all remaining idle to conqueror role
-            logger.debug("[Transfert all attackers] OLD nb ATTACKER: %s" % self.nb_drone_role(DroneRole.ATTACKER))
+            logging.debug("[Transfert all attackers] OLD nb ATTACKER: %s" % self.nb_drone_role(DroneRole.ATTACKER))
             # Copy the list of ship_id for modification
             list_ship_id = list(self.__all_role_drones[DroneRole.CONQUEROR])
             for ship_id in list_ship_id:
                 drone = self.__all_drones[ship_id]
                 self.change_drone_role(drone, DroneRole.ATTACKER)
-            logger.debug("[Transfert all attackers]NEW nb ATTACKER: %s" % self.nb_drone_role(DroneRole.ATTACKER))
+            logging.debug("[Transfert all attackers]NEW nb ATTACKER: %s" % self.nb_drone_role(DroneRole.ATTACKER))
             return
 
-        # Loop through all conqueror drone
+        list_drone_no_target = []
+        # Loop once through all conqueror drone to handle drone with target
         for ship_id in list(self.__all_role_drones[DroneRole.CONQUEROR]):
+            logging.debug("first conqueror loop: handling ship: %s" % ship_id)
             # Get the drone
             drone = self.__all_drones[ship_id]
-            ship = drone.ship
 
             # Check if enemies are in the radius of defense
-            # If the drone has not exhausted its defender_time
-            if drone.defender_timer > 0:
-                became_defender = False
-                for enemy_id, enemy in self.__enemy_ships_dict.items():
-                    # Calculate the distance with each enemy ship
-                    distance = ship.calculate_distance_between(enemy)
-                    # If an enemy ship is too close enter defender role
-                    if distance <= DEFENDER_RADIUS:
-                        # Change drone role to DEFENDER
-                        self.change_drone_role(drone, DroneRole.DEFENDER)
-                        became_defender = True
-                        # No need to look for more ships
-                        break
-                # Make sure to no run conqueror orders if it became a defender
-                if became_defender:
-                    logger.debug("Created a defender")
-                    # Skip to next ship
-                    continue
+            became_defender = self.check_drone_defense(drone)
+            if became_defender:
+                # This conqueror became a defender, so don't continue for this drone
+                logging.info("A conqueror became a defender")
+                # Skip to next drone
+                continue
 
             # Check if the drone has a valid target, skip it if so
             if drone.target is not None:
+                logging.debug("Ship: %s has a target" % drone.ship.id)
+                # Now make sure its target is still a free planet
+                if drone.target.is_free(drone.ship.owner):
+                    logging.debug("ship %s target is not free anymore" % drone.ship.id)
+                    # Reset target
+                    drone.reset_target()
+                    # Add the drone to no_target list
+                    list_drone_no_target.append(drone)
+                    # Skip to next drone
+                    continue
+
+                # Reduce the number of available spot for the target by 1
+                dic_nb_available_spot[drone.target.id] -= 1
                 # First, make sure that if the ship can dock to its target!
-                if ship.can_dock(drone.target):
+                logging.info("Check if a drone can dock: ship.id: %s, planet.id: %s" % (drone.ship.id, drone.target.id))
+                if drone.can_dock(drone.target):
                     # Store old target
                     target = drone.target
                     # Change role to miner
                     self.change_drone_role(drone, DroneRole.MINER)
                     # Ask for the drone to dock
                     drone.docking(target)
-                # Skip to next ship, if it has docked or not
-                continue
-
-            # Get the list of empty planets planets and calculate their distance
-            list_empty = []
-            for planet_id, planet in self.__empty_planets.items():
-                distance = ship.calculate_distance_between(planet) - planet.pos.radius
-                list_empty.append([distance, planet])
-
-            # Sort list by distance ASC
-            list_empty = sorted(list_empty, key=lambda l: l[0])
-
-            # Get the list owned empty planets planets and calculate their distance
-            list_owned = []
-            for planet in self.__team_planets:
-                distance = ship.calculate_distance_between(planet)
-                list_owned.append((distance, planet))
-
-            # Sort list by distance ASC
-            list_owned = sorted(list_owned, key=lambda l: l[0])
-            # Only keep the planet, we don't need the distance anymore
-            list_owned = [p[1] for p in list_owned]
-
-            """
-            # First, make sure that if the ship can do the closest empty planet it docks!
-            if ship.can_dock(list_empty[0][1]):
-                # Change role to miner
-                self.change_drone_role(drone, DroneRole.MINER)
-                # Ask for the drone to
-                drone.docking(list_empty[0][1])
-                # Skip to next drone
-                continue
-            """
-
-            # Then, if it can dock to the closest owned planet, make sure that there are not too many docked ship
-            if (len(list_owned) > 0) and (not list_owned[0].is_full()) and (ship.can_dock(list_owned[0])):
-                if len(list_owned[0].all_docked_ships()) < min(MAX_NB_DOCKED_SHIP, len(list_owned) + 1 ):
-                    # Change the role of the Drone to Miner
-                    drone = self.__all_drones[ship_id]
-                    self.change_drone_role(drone, DroneRole.MINER)
-                    drone.docking(list_owned[0])
                     # Skip to next drone
                     continue
 
-            # Now, look for a suitable empty planet
-            for distance, target_planet in list_empty:
-                try:
-                    nb_ship_per_planet[target_planet.id] += 1
-                except KeyError:
-                    nb_ship_per_planet[target_planet.id] = 1
+            else:
+                # ADd the drone to no_target list
+                # Skip to next ship, if it has no target
+                list_drone_no_target.append(drone)
+                continue
 
-                # Only send a ship if there is less than half of the current ship going to this destination
-                if (nb_ship_per_planet[target_planet.id] > MIN_SHIP_PER_PLANET) and \
-                    (nb_ship_per_planet[target_planet.id] > math.ceil(
-                                len(self.__all_role_drones[DroneRole.CONQUEROR]) * MAX_RATIO_SHIP_PER_PLANET)):
-                    logger.debug("Reroute the ship to another planet, too many ship already going there")
-                    # This ship is not going there anymore, remove from the counter
-                    nb_ship_per_planet[target_planet.id] -= 1
-                    # Skip to next planet in the list
-                    continue
-                else:
-                    # We've found a valid target, let's assign it
+        # Find a target for drone without target
+        for drone in list_drone_no_target:
+            # Now, look for a suitable empty planet
+            for distance, target_planet in drone.get_free_planet_by_score():
+                # Check if we can still find an available docking spot on this planet
+                if dic_nb_available_spot[target_planet.id] > 0:
                     drone.assign_target(target_planet, distance, target_type=TargetType.PLANET)
-                    # Exit target planet loop
+                    dic_nb_available_spot[target_planet.id] -= 1
+
+                    # Check if by chance the drone can dock to its new target, to avoid loosing a turn
+                    if drone.can_dock(drone.target):
+                        # Store old target
+                        target = drone.target
+                        # Change role to miner
+                        self.change_drone_role(drone, DroneRole.MINER)
+                        # Ask for the drone to dock
+                        drone.docking(target)
+
                     break
 
     def order_defender(self):
@@ -724,9 +618,9 @@ class Manager(object):
                 # Decrease defender time by one
                 drone.defender_timer -= 1
                 # Look for the closest ship, defender don't look for nemesis, just attack the closest
-                target, distance = self.__look_for_closest_ship(ship)
-                if target is not None:
-                    drone.assign_target(target, distance, target_type=TargetType.SHIP)
+                distance, enemy_ship = drone.get_closest_ship()
+                if enemy_ship is not None:
+                    drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
 
     def create_command_queue(self):
         """
@@ -785,7 +679,7 @@ class Manager(object):
             # if the target is a ship
             if drone.target_type == TargetType.SHIP:
                 nb_target_ship += 1
-                logger.info("Go attack ship : %s" % drone.target.id)
+                logging.info("Go attack ship : %s" % drone.target.id)
                 command = self.__attack_ship_command(drone.ship, drone.target)
                 if command:
                     command_queue.append(command)
@@ -804,5 +698,5 @@ class Manager(object):
                     # Leave the loop
                     break
 
-        logger.info("Sent command to attack %s ship and navigate to %s planet" % (nb_target_ship, nb_target_planet))
+        logging.info("Sent command to attack %s ship and navigate to %s planet" % (nb_target_ship, nb_target_planet))
         return command_queue
