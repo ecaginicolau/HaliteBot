@@ -2,7 +2,7 @@ import sys
 import logging
 import copy
 from . import game_map
-
+import os
 
 class Game:
     """
@@ -70,7 +70,13 @@ class Game:
         """
         log_file = "log/{}_{}.log".format(tag, name)
         #log_file = "{}_{}.log".format(tag, name)
-        logging.basicConfig(filename=log_file, level=logging.DEBUG, filemode='w')
+        try:
+            if os.environ['RAMPA_LOG_LEVEL'] == "DEBUG":
+                logging.basicConfig(filename=log_file, level=logging.DEBUG, filemode='w')
+            else:
+                logging.basicConfig(filename=log_file, level=logging.WARNING, filemode='w')
+        except:
+            logging.basicConfig(filename=log_file, level=logging.WARNING, filemode='w')
         logging.info("Initialized bot {}".format(name))
 
     def __init__(self, name):

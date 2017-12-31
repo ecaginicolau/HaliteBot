@@ -3,7 +3,8 @@ import logging
 import math
 from enum import Enum
 
-from bot.navigation import Circle, navigate, calculate_distance_between
+from bot.navigation import Circle, navigate, calculate_distance_between, direction, calculate_length
+from bot.settings import INTERMEDIATE_RATIO
 from . import constants
 
 
@@ -60,7 +61,7 @@ class Entity:
 
     def __str__(self):
         return "Entity {} (id: {}) at position: (x = {}, y = {}), with radius = {}" \
-            .format(self.__class__.__name__, self.id, self.pos.x, self.pos.y, self.pos.radius)
+            .format(self.__class__.__name__, self.id, int(self.pos.x), int(self.pos.y), int(self.pos.radius))
 
     def __repr__(self):
         return self.__str__()
@@ -229,8 +230,7 @@ class Ship(Entity):
     :ivar DockingStatus docking_status: The docking status (UNDOCKED, DOCKED, DOCKING, UNDOCKING)
     :ivar planet: The ID of the planet the ship is docked to, if applicable.
     :ivar owner: The player ID of the owner, if any. If None, Entity is not owned.
-    :ivar vel_x: the velocity of the ship in x axis
-    :ivar vel_y: the velocity of the ship in y axis
+    :ivar velocity Circl: contains vel_x & vel_y
     """
 
     class DockingStatus(Enum):
@@ -249,8 +249,8 @@ class Ship(Entity):
         self.planet = planet if (docking_status is not Ship.DockingStatus.UNDOCKED) else None
         self._docking_progress = progress
         self._weapon_cooldown = cooldown
-        self.vel_x = vel_x
-        self.vel_y = vel_y
+
+        self.velocity = Circle(-1, -1, 0)
 
     def thrust(self, magnitude, angle):
         """
@@ -291,7 +291,7 @@ class Ship(Entity):
         return "u {}".format(self.id)
 
     def navigate(self, target, game_map, speed, max_corrections=90, angular_step=1, ignore_ships=False,
-                 ignore_planets=False, ignore_ghosts=False):
+                 ignore_planets=False, ignore_ghosts=False, assassin=False, closest=False):
         """
         # Will calculate a valid path between the ship and the target
 
@@ -303,16 +303,55 @@ class Ship(Entity):
         :param ignore_ships: Should we ignore ships in obstacles list
         :param ignore_planets:  Should we ignore planets in obstacles list
         :param ignore_ghosts:  Should we ignore ghosts in obstacles list
+        :param assassin:  Is the ship an assassin
         :return:
         """
-        speed, angle, ghost = navigate(self.pos, target.pos, game_map, speed, max_corrections=max_corrections,
-                                       angular_step=angular_step, ignore_ships=ignore_ships,
-                                       ignore_planets=ignore_planets, ignore_ghosts=ignore_ghosts)
 
+        # Should we navigate to the point directly? or the closest points inside our radius?
+        if closest:
+            closest_target = self.closest_point_to(target)
+        else:
+            closest_target = target
+
+        final_speed, angle, ghost = navigate(self.pos, closest_target.pos, game_map, speed, max_corrections=max_corrections,
+                                       angular_step=angular_step, ignore_ships=ignore_ships,
+                                       ignore_planets=ignore_planets, ignore_ghosts=ignore_ghosts, assassin=assassin)
+
+        # If there is a ghost it means we found a way to navigate
+        if ghost is not None:
+            # Add the ghost to the map
+            game_map.add_ghost(ghost)
+            # Move
+            return self.thrust(final_speed, angle)
+
+        # Retry with an intermediate position
+        logging.debug("Can't find a path to %s, so Looking for an intermediate position" % target.id)
+        # Calculate the intermediate position
+        # Take the direction
+        new_target = direction(self.pos, target.pos)
+        # Calculate length of the direction
+        distance = calculate_distance_between(self.pos, target.pos)
+
+        # Create a new speed, much slower
+        new_speed = min(speed, distance)
+        new_speed *= INTERMEDIATE_RATIO
+        # Apply a ratio to find an intermediate point at "speed" distance
+        logging.debug("Going at a new point located at 'speed:%s' distance of the ship" % new_speed)
+        new_target.x *= new_speed / distance
+        new_target.y *= new_speed / distance
+        # Add the direction to the ship position
+        new_target.x += self.pos.x
+        new_target.y += self.pos.y
+        final_speed, angle, ghost = navigate(self.pos, new_target, game_map, new_speed,
+                                             max_corrections=max_corrections + 30, angular_step=angular_step,
+                                             ignore_ships=ignore_ships, ignore_planets=ignore_planets,
+                                             ignore_ghosts=ignore_ghosts, assassin=assassin)
         if ghost is not None:
             game_map.add_ghost(ghost)
+        else:
+            logging.debug("Couldn't find a path for the intermediate position either")
 
-        return self.thrust(speed, angle)
+        return self.thrust(final_speed, angle)
 
     def can_dock(self, planet):
         """

@@ -1,7 +1,8 @@
 import logging
 
-from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT
-from bot.navigation import Circle, calculate_distance_between
+from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT
+from bot.navigation import Circle, calculate_distance_between, calculate_angle_between, direction, \
+    calculate_angle_vector
 from hlt.entity import Ship
 
 logger = logging.getLogger("monitor")
@@ -19,9 +20,11 @@ class Monitor(object):
     The role of this class is to monitor everything in the game and give indication on where to attack / conquer
     """
 
-    def __init__(self, player_id):
+    def __init__(self, player_id, manager):
         # Store the player id, will be used to distinguish ships
         self.player_id = player_id
+        # Store the manager
+        self.manager = manager
         # Store the game_map, must be updated everturn
         self.game_map = None
         # Store the current nemesis, must be reset every turn
@@ -41,6 +44,9 @@ class Monitor(object):
         self.__ship_by_player = {}
         # Will store all ships in dictionary, should be updated every turn
         self.__all_ships_dict = {}
+
+        # Store the old_position of every ship to calculate vel_x & vel_y, indexed by ship_id
+        self.__all_ships_old_position = {}
 
     def update_game(self, game_map):
         """
@@ -80,14 +86,32 @@ class Monitor(object):
             except KeyError:
                 self.__ship_by_player[ship.owner.id] = [ship.id]
 
-        # Clean threat level of ship that died
-        for ship_id in list(self.__threat_level.keys()):
+        # Calculate velocity of all ship
+        self.calculate_velocity()
+
+    def calculate_velocity(self):
+        # Keep the list of ship_id that needs to be deleted from old_postion
+        need_to_be_deleted = []
+
+        # Delete useless old position (not a ship anymore)
+        for ship_id, old_position in self.__all_ships_old_position.items():
             try:
-                # Check if the ship can be still found in the list of enemy ship
-                self.__all_ships_dict[ship_id]
+                # Get the ship, will trigger a KeyERror exception if it doesn't exist anymore
+                ship = self.__all_ships_dict[ship_id]
+                # Calculate the velocity based on the old positoin
+                ship.velocity = Circle(ship.pos.x - old_position.x, ship.pos.y - old_position.y)
+                # Store the new position for next turn
             except KeyError:
-                # Remove the ship if it can't be found
-                del self.__threat_level[ship_id]
+                # If the ship can't be found anymore add it to "need_to_be_deleted" list for later
+                need_to_be_deleted.append(ship_id)
+
+        # Now delete useless ship
+        for ship_id in need_to_be_deleted:
+            del self.__all_ships_old_position[ship_id]
+
+        # Update the position of all existing ship
+        for ship_id, ship in self.__all_ships_dict.items():
+            self.__all_ships_old_position[ship_id] = Circle(ship.pos.x, ship.pos.y)
 
     def get_all_planets_dict(self):
         return self.__all_planets_dict
@@ -318,14 +342,63 @@ class Monitor(object):
         Give a threat level for every enemy ship
         :return:
         """
+
+        # Clean threat level of ship that died
+        for ship_id in list(self.__threat_level.keys()):
+            try:
+                # Check if the ship can be still found in the list of enemy ship
+                self.__all_ships_dict[ship_id]
+            except KeyError:
+                # Remove the ship if it can't be found
+                del self.__threat_level[ship_id]
+
+
         # Store the old threat level for delta calculation
         # old_threat_level = self.__threat_level
 
         # loop through all enemy ship
         for enemy_id, list_ship in self.__ship_by_player.items():
-            for ship in list_ship:
-                # Easy : docked = no threat
-                if ship.docking_status != Ship.DockingStatus.UNDOCKED:
-                    self.__threat_level[ship.id] = 0
-                    # Skip to next ship
-                    continue
+            # Don't check our own ships
+            if enemy_id != self.player_id:
+                for ship_id in list_ship:
+                    ship = self.__all_ships_dict[ship_id]
+                    # Easy : docked = no threat
+                    if ship.docking_status != Ship.DockingStatus.UNDOCKED:
+                        self.__threat_level[ship.id] = NO_THREAT
+                        # Skip to next ship
+                        continue
+
+                    # Try to guess the target
+                    # Skip if the velocity is null
+                    if ship.velocity.x == 0 and ship.velocity.y == 0:
+                        self.__threat_level[ship.id] = NO_THREAT
+                        continue
+                    smallest_angle = 360
+                    possible_target = None
+                    for other_ship_id, other_ship in self.__all_ships_dict.items():
+                        #If they belong to the same owner, don't look
+                        if ship.owner == other_ship.owner:
+                            continue
+
+                        # Calculate the direction between the 2 ships
+                        delta = direction(ship.pos, other_ship.pos)
+                        # Calculate the angle between the direction and the velocity
+                        angle = calculate_angle_vector(ship.velocity, delta)
+                        # Get an absolute angle: 10° == 350°
+                        angle = min(angle, 360 - angle)
+                        # logger.info("Dir: %.2f:%.2f, vel: %.2f:%.2f Angle between ship: %s & ship: %s is %s"  %
+                        #  (delta.x, delta.y, ship.velocity.x, ship.velocity.y,ship_id, other_ship_id, angle))
+                        if angle  < smallest_angle:
+                            smallest_angle = angle
+                            possible_target = other_ship
+
+                    if (possible_target is not None) and (smallest_angle < MIN_ANGLE_TARGET)\
+                            and (possible_target.owner.id == self.player_id):
+                        # The threat is an estimation of the number it would take to the ship to arrives
+                        distance = calculate_distance_between(ship.pos, possible_target.pos)
+                        self.__threat_level[ship.id] = distance
+                        logger.info("Found a possible target for ship: %s it's: ship %s" % (ship.id, possible_target.id))
+                        self.manager.add_possible_threat(possible_target.id, distance, ship.id)
+                    else:
+                        self.__threat_level[ship.id] = NO_THREAT
+

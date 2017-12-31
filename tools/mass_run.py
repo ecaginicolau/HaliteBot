@@ -50,6 +50,7 @@ class Task:
         :return:
         """
         cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" """
+        # cmd = """halite.exe -r -q -d "384 256" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" """
         output = subprocess.check_output(cmd).decode("ascii")
         data = json.loads(output)
 
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     global_dic["nb"] = 0
 
     # Start consumers
-    num_consumers = multiprocessing.cpu_count() * 2
+    num_consumers = int(multiprocessing.cpu_count() * 0.5) # Don't overload the PC for this
     print("Creating %s consumers" % num_consumers)
     consumers = [ Consumer(tasks, results, global_dic) for i in range(num_consumers)]
 
@@ -85,7 +86,7 @@ if __name__ == '__main__':
 
 
     # Enqueue jobs
-    num_jobs = 1000
+    num_jobs = 500
 
 
     #time
@@ -114,4 +115,5 @@ if __name__ == '__main__':
     avg_duration = duration / nb
     print("Final stats: %s/%s wins, %.2f%%, duration: %.2f, average duration: %.2f" % (nb_win, nb, percent, duration, avg_duration))
 
+    exit()
 

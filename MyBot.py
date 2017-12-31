@@ -33,12 +33,6 @@ try:
 
         # Update the game_map in the manager
         manager.update_game_map(game_map, START_TIME)
-        # Check for dead drone
-        manager.check_for_dead_drones()
-        # Check/Update drone's targets
-        manager.check_drone_target()
-        # Check for newly created ship, convert them to drone
-        manager.check_for_new_ship()
         # Calculate the distance between all ships once and for all
         manager.calculate_all_drones_distance()
         # Print the role status

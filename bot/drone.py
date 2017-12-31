@@ -80,7 +80,10 @@ class Drone(object):
         self.__enemy_distance = {}
         # Store the distance of all planets, indexed by planet.id
         self.__planet_distance = {}
-
+        # Store the possible threats as a list
+        self.__possibles_threats = []
+        # Flag is the drone is alive
+        self.__is_alive = True
 
     def update_ship(self, ship):
         """
@@ -89,6 +92,14 @@ class Drone(object):
         :return:
         """
         self.ship = ship
+        # Reset the list of possible_threats for this drone
+        self.__possibles_threats = []
+
+    def is_alive(self):
+        return self.__is_alive
+
+    def add_possible_threat(self, distance, threat):
+        self.__possibles_threats.append((distance, threat))
 
     def reset_target(self):
         """
@@ -126,22 +137,17 @@ class Drone(object):
         :param planet:
         :return: bool, true if can dock
         """
-        logger.debug("drone.can_dock ship.id: %s, planet.id: %s" % (self.ship.id, planet.id))
         # Make sure the planet is free
         if planet.owner is not None and planet.owner != self.ship.owner:
-            logger.debug("can't dock, the planet has an owner other than us")
             return False
         # Make sure the planet is not full
         if planet.is_full():
-            logger.debug("can't dock, the planet is full")
             return False
         # Make sure we are not too far
         if self.__planet_distance[planet.id] > planet.pos.radius + constants.DOCK_RADIUS + constants.SHIP_RADIUS:
-            logger.debug("can't dock, the planet is too far")
             return False
 
-        logger.debug("CAN dock")
-        #If we've arrived up to here, it means we can dock
+        # If we've arrived up to here, it means we can dock
         return True
 
     def update_target(self, target):
@@ -249,7 +255,6 @@ class Drone(object):
                 if enemy_ship.docking_status == Ship.DockingStatus.UNDOCKED:
                     # Skip to next ship
                     continue
-
             # If we are looking for a specific enemy's ships
             if player_id is not None:
                 # Check if the ship's owner match the enemy we are looking after
@@ -258,6 +263,8 @@ class Drone(object):
                     continue
             # If we've made up to here it means we have found the correct ship!
             return distance, enemy_ship
+        # There are no ships matching this filter
+        return None, None
 
     def calculate_all_ships_distance(self, all_ships):
         """
@@ -352,8 +359,9 @@ class Drone(object):
         for distance, planet in self.__planet_by_distance:
             # Make sure the planet is free
             if planet.is_free(self.ship.owner):
-                score = distance * planet.nb_available_docking_spots()
+                score = distance / planet.nb_available_docking_spots()
                 list_score.append((score, planet))
+        list_score = sorted(list_score, key=lambda l: l[0])
         return list_score
 
 
