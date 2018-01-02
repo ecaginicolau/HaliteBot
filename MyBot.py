@@ -38,7 +38,7 @@ try:
         # Print the role status
         manager.role_status()
         # Check damaged ship
-        manager.check_damaged_drone()
+        #manager.check_damaged_drone()
         # Check defenders timer
         manager.check_defender_timer()
         # Give role to IDLE drone

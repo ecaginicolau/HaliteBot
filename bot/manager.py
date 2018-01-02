@@ -275,7 +275,7 @@ class Manager(object):
                     # If there are no assassin, make an assassin
                     if self.nb_drone_role(DroneRole.ASSASSIN) == 0:
                         # Create an assassin
-                        self.change_drone_role(drone, DroneRole.ATTACKER)
+                        self.change_drone_role(drone, DroneRole.ASSASSIN)
                     else:
                         # If there are more assassin than attacker
                         if self.nb_drone_role(DroneRole.ASSASSIN) >= self.nb_drone_role(DroneRole.ATTACKER):
