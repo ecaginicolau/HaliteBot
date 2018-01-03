@@ -5,18 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="eaf44f6c-0da1-43ab-b970-6b04b3a999b9" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/.idea/codeStyleSettings.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change beforePath="$PROJECT_DIR$/.idea/HaliteBot.iml" afterPath="$PROJECT_DIR$/.idea/HaliteBot.iml" />
       <change beforePath="$PROJECT_DIR$/MyBot.py" afterPath="$PROJECT_DIR$/MyBot.py" />
-      <change beforePath="$PROJECT_DIR$/bot/drone.py" afterPath="$PROJECT_DIR$/bot/drone.py" />
-      <change beforePath="$PROJECT_DIR$/bot/manager.py" afterPath="$PROJECT_DIR$/bot/manager.py" />
-      <change beforePath="$PROJECT_DIR$/bot/monitor.py" afterPath="$PROJECT_DIR$/bot/monitor.py" />
-      <change beforePath="$PROJECT_DIR$/bot/navigation.pyx" afterPath="$PROJECT_DIR$/bot/navigation.pyx" />
-      <change beforePath="$PROJECT_DIR$/bot/settings.py" afterPath="$PROJECT_DIR$/bot/settings.py" />
-      <change beforePath="$PROJECT_DIR$/hlt/entity.py" afterPath="$PROJECT_DIR$/hlt/entity.py" />
-      <change beforePath="$PROJECT_DIR$/run_game.bat" afterPath="$PROJECT_DIR$/run_game.bat" />
-      <change beforePath="$PROJECT_DIR$/run_game_4players.bat" afterPath="$PROJECT_DIR$/run_game_4players.bat" />
-      <change beforePath="$PROJECT_DIR$/tools/mass_run.py" afterPath="$PROJECT_DIR$/tools/mass_run.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -101,11 +91,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MyBot.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="MyBot.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/MyBot.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="530">
-              <caret line="42" column="8" lean-forward="false" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="8" />
+              <caret line="42" column="10" lean-forward="false" selection-start-line="42" selection-start-column="10" selection-end-line="42" selection-end-column="10" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
               </folding>
@@ -113,11 +103,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="navigation.pyx" pinned="false" current-in-tab="true">
+      <file leaf-file-name="navigation.pyx" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bot/navigation.pyx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="527">
-              <caret line="336" column="87" lean-forward="false" selection-start-line="336" selection-start-column="87" selection-end-line="336" selection-end-column="87" />
+            <state relative-caret-position="204">
+              <caret line="317" column="38" lean-forward="false" selection-start-line="317" selection-start-column="38" selection-end-line="317" selection-end-column="38" />
               <folding />
             </state>
           </provider>
@@ -239,11 +229,11 @@
         <option value="$PROJECT_DIR$/tests.py" />
         <option value="$PROJECT_DIR$/hlt/entity.py" />
         <option value="$PROJECT_DIR$/bot/monitor.py" />
-        <option value="$PROJECT_DIR$/MyBot.py" />
         <option value="$PROJECT_DIR$/bot/drone.py" />
         <option value="$PROJECT_DIR$/bot/manager.py" />
         <option value="$PROJECT_DIR$/run_game.bat" />
         <option value="$PROJECT_DIR$/bot/navigation.pyx" />
+        <option value="$PROJECT_DIR$/MyBot.py" />
       </list>
     </option>
   </component>
@@ -517,14 +507,13 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="1898" y="752" width="1932" height="1364" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3586777" sideWeight="0.57051283" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32881662" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3586777" sideWeight="0.4241453" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3586777" sideWeight="0.5758547" order="9" side_tool="true" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3586777" sideWeight="0.5758547" order="9" side_tool="true" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30608973" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -775,16 +764,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/MyBot.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="530">
-          <caret line="42" column="8" lean-forward="false" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="8" />
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bot/drone.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="544">
@@ -821,9 +800,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/bot/navigation.pyx">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="527">
-          <caret line="336" column="87" lean-forward="false" selection-start-line="336" selection-start-column="87" selection-end-line="336" selection-end-column="87" />
+        <state relative-caret-position="204">
+          <caret line="317" column="38" lean-forward="false" selection-start-line="317" selection-start-column="38" selection-end-line="317" selection-end-column="38" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MyBot.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="530">
+          <caret line="42" column="10" lean-forward="false" selection-start-line="42" selection-start-column="10" selection-end-line="42" selection-end-column="10" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
