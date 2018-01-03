@@ -1,6 +1,5 @@
 from libc.math cimport sqrt, M_PI, sin, cos, round, atan2, acos
 from bot.settings import ASSASSIN_AVOID_RADIUS
-import logging
 
 cdef double radians(double angle):
     """
@@ -189,7 +188,6 @@ cpdef bint obstacles_between(Circle ship, Circle target, game_map, bint ignore_s
     """
 
     cdef double fudge = ship.radius + 0.1
-    logging.debug("Checking obstacle between %s and %s" % (ship, target))
     # Avoid my own ships
     if not ignore_ships:
         for my_ship in game_map.get_me().all_ships():
@@ -200,9 +198,7 @@ cpdef bint obstacles_between(Circle ship, Circle target, game_map, bint ignore_s
 
     # Avoid ghost (future position of my ships)
     if not ignore_ghosts:
-        logging.debug("Checking ghost intersect")
         for start,ghost in game_map.all_ghost():
-            logging.debug("Checking interection between %s:%s and  ghost %s:%s" % (ship, target, start, ghost))
             if segment_intersect(start,ghost, ship, target):
                 return True
             if intersect_segment_circle(ship, target, ghost, fudge=fudge+1):
