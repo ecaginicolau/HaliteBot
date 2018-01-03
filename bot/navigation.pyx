@@ -1,7 +1,6 @@
 from libc.math cimport sqrt, M_PI, sin, cos, round, atan2, acos
-import logging
-
 from bot.settings import ASSASSIN_AVOID_RADIUS
+import logging
 
 cdef double radians(double angle):
     """
@@ -36,10 +35,35 @@ cdef class Circle:
         self.radius = radius
 
     def __str__(self):
-        return "Circle(%.2f, %.2f, %.2f)" % (self.x, self.y, self.radius)
+        return "Circle({:.2f}, {:.2f}, {:.2f}".format(self.x, self.y, self.radius)
 
     def __repr__(self):
         return self.__str__()
+
+    def __add__(self,Circle other):
+        return Circle(self.x + other.x, self.y + other.y, other.radius)
+
+    def __sub__(self,Circle other):
+        return Circle(self.x - other.x, self.y - other.y, other.radius)
+
+    def __truediv__(self, double other):
+        return Circle(self.x / other, self.y / other, self.radius)
+
+    def __mul__(self, other):
+        cdef double d1
+        cdef double d2
+        cdef double scalar
+        if isinstance(other, Circle):
+            d1 = calculate_length(self)
+            d2 = calculate_length(other)
+            scalar =  (self.x * other.x + self.y * other.y) / (d1 * d2)
+            return scalar
+        else:
+            return Circle(self.x * other, self.y * other, self.radius)
+
+    @staticmethod
+    def zero():
+        return Circle(0,0,0)
 
 cpdef double calculate_distance_between(Circle p1, Circle p2):
     """
@@ -68,7 +92,7 @@ cpdef double calculate_length(Circle v1):
     :param v1: 
     :return: 
     """
-    return calculate_distance_between(Circle(0,0,0), v1)
+    return sqrt((v1.x ** 2) + (v1.y ** 2))
 
 cpdef double calculate_angle_vector(Circle v1, Circle v2):
     """
@@ -77,20 +101,17 @@ cpdef double calculate_angle_vector(Circle v1, Circle v2):
     :param v2: 
     :return: 
     """
-    cdef double d1 = calculate_length(v1)
-    cdef double d2 = calculate_length(v2)
-
-    cdef double scalar =  (v1.x * v2.x + v1.y * v2.y) / (d1 * d2)
+    cdef double scalar = v1 * v2
     return degrees(acos(scalar))
 
-cpdef Circle direction(Circle p1, Circle p2):
+cpdef Circle calculate_direction(Circle p1, Circle p2):
     """
     Return the direction between p1 & p2 :
     :param p1: 
     :param p2: 
     :return: p2 - p1
     """
-    return Circle(p2.x - p1.x, p2.y - p1.y, p2.radius)
+    return p2 - p1
 
 cpdef Circle closest_point_to(Circle p1, Circle p2, int min_distance=3):
     """
@@ -168,8 +189,8 @@ cpdef bint obstacles_between(Circle ship, Circle target, game_map, bint ignore_s
     """
 
     cdef double fudge = ship.radius + 0.1
-
-    # Avoid my own ship
+    logging.debug("Checking obstacle between %s and %s" % (ship, target))
+    # Avoid my own ships
     if not ignore_ships:
         for my_ship in game_map.get_me().all_ships():
             if my_ship.pos == ship or my_ship.pos == target:
@@ -177,10 +198,14 @@ cpdef bint obstacles_between(Circle ship, Circle target, game_map, bint ignore_s
             if intersect_segment_circle(ship, target, my_ship.pos, fudge=fudge):
                 return True
 
-    # Avoid ghost (futur position of my ships)
+    # Avoid ghost (future position of my ships)
     if not ignore_ghosts:
-        for ghost in game_map.all_ghost():
-            if intersect_segment_circle(ship, target, ghost, fudge=fudge):
+        logging.debug("Checking ghost intersect")
+        for start,ghost in game_map.all_ghost():
+            logging.debug("Checking interection between %s:%s and  ghost %s:%s" % (ship, target, start, ghost))
+            if segment_intersect(start,ghost, ship, target):
+                return True
+            if intersect_segment_circle(ship, target, ghost, fudge=fudge+1):
                 return True
 
     # Avoid planets
@@ -254,12 +279,13 @@ cpdef tuple navigate(Circle ship, Circle target, game_map, double speed, int max
     :rtype: tuple
     """
 
-
+    """
     debug_str = "navigate(ship=%s, target=%s, game_map, speed=%s, max_corrections=%s, angular_spep=%s, "
     debug_str += "ignore_ships=%s, ignore_planets=%s, ignore_ghosts=%s, assassin=%s)"
     debug_str = debug_str % (
     ship, target, speed, max_corrections, angular_step, ignore_ships, ignore_planets, ignore_ghosts, assassin)
     logging.debug(debug_str)
+    """
 
     # If we've run out of tries, we can't navigate
     if max_corrections <= 0:
@@ -285,13 +311,13 @@ cpdef tuple navigate(Circle ship, Circle target, game_map, double speed, int max
             da += angular_step
             # If we ran out of tries
             if da > max_corrections:
-                # Return no thurst
+                # Return no thrust
                 return 0, 0, None
 
             #Switch direction
             direction = -1 * direction
             # Add the new delta
-            new_angle = angle + da
+            new_angle = angle + da * direction
 
             # Make sure the new_angle is between [0, 360]
             if new_angle < 0:
@@ -308,9 +334,65 @@ cpdef tuple navigate(Circle ship, Circle target, game_map, double speed, int max
     #Also calculate the future position of the ship
     new_target_dx = cos(radians(angle)) * speed
     new_target_dy = sin(radians(angle)) * speed
-    new_target = Circle(ship.x + new_target_dx, ship.y + new_target_dy, ship.radius)
+    new_target = Circle(ship.x + new_target_dx, ship.y + new_target_dy, ship.radius * 4)
 
     return speed, new_angle, new_target
 
 
+# From https://www.cdn.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+# Given three colinear points p, q, r, the function checks if
+# point q lies on line segment 'pr'
+cdef bint on_segment(Circle p, Circle q, Circle r):
+    if min(p.x, r.x) <= q.x <= max(p.x, r.x) and  min(p.y, r.y) <= q.y <= max(p.y, r.y):
+       return True
+    return False
 
+# To find orientation of ordered triplet (p, q, r).
+# The function returns following values
+# 0 --> p, q and r are collinear
+# 1 --> Clockwise
+# 2 --> Counterclockwise
+cdef int orientation(Circle p, Circle q, Circle r):
+    # See https://www.geeksforgeeks.org/orientation-3-ordered-points/
+    # for details of below formula.
+    cdef double val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y)
+
+    if val == 0:
+        return 0 # collinear
+
+    if val > 0:
+        return 1
+    return 2
+
+# The main function that returns true if line segment 'p1q1'
+# and 'p2q2' intersect.
+cpdef bint segment_intersect(Circle p1, Circle q1, Circle p2, Circle q2):
+    # Find the four orientations needed for general and
+    # special cases
+    cdef int o1 = orientation(p1, q1, p2)
+    cdef int o2 = orientation(p1, q1, q2)
+    cdef int o3 = orientation(p2, q2, p1)
+    cdef int o4 = orientation(p2, q2, q1)
+
+    # General case
+    if o1 != o2 and o3 != o4:
+        return True
+
+    # Special Cases
+    # p1, q1 and p2 are collinear and p2 lies on segment p1q1
+    if o1 == 0 and on_segment(p1, p2, q1):
+        return True
+
+    # p1, q1 and p2 are collinear and q2 lies on segment p1q1
+    if o2 == 0 and on_segment(p1, q2, q1):
+        return True
+
+    # p2, q2 and p1 are collinear and p1 lies on segment p2q2
+    if o3 == 0 and on_segment(p2, p1, q2):
+        return True
+
+    # p2, q2 and q1 are collinear and q1 lies on segment p2q2
+    if o4 == 0 and on_segment(p2, q1, q2):
+        return True
+
+    return False # Doesn't fall in any of the above cases

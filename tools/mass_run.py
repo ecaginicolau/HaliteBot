@@ -2,6 +2,9 @@ import multiprocessing
 import ujson as json
 import subprocess
 import time
+from pprint import pprint
+
+import math
 
 START_TIME = time.time()
 
@@ -30,11 +33,12 @@ class Consumer(multiprocessing.Process):
                 self.global_dic["win"] += 1
             win = self.global_dic["win"]
             nb = self.global_dic["nb"]
-            percent = (win / float(nb)) * 100.0
+            percent = (win / float(nb))
             current_time = time.time()
             avg_duration = (current_time - START_TIME) / float(nb)
-
-            print("Current score: %s/%s for %.2f%%, avg duration: %.2f" % (win, nb, percent, avg_duration))
+            confidence_factor = 0.98 *2 # 95%
+            error_margin = math.sqrt((percent * (1 - percent)) / nb) * confidence_factor
+            print("Current score: %s/%s for %.2f%%, error margin: %.2f%%, avg duration: %.2f" % (win, nb, percent * 100.0, error_margin * 100.0, avg_duration))
             self.task_queue.task_done()
             self.result_queue.put(result)
 
@@ -49,11 +53,12 @@ class Task:
         :param n: the number of the game, for log display
         :return:
         """
-        cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" """
-        # cmd = """halite.exe -r -q -d "384 256" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" """
+        #cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" """
+        cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteBotV43\\run_bot.bat" """
+        #cmd = """halite.exe -r -q -d "384 256" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" """
         output = subprocess.check_output(cmd).decode("ascii")
         data = json.loads(output)
-
+        #pprint( data)
         # return if a win
         win = data["stats"]["0"]["rank"] == 1
         #if win:
@@ -110,10 +115,16 @@ if __name__ == '__main__':
             nb_win +=1
         num_jobs -= 1
 
-    percent = (nb_win / float(nb)) * 100.0
+    percent = nb_win / float(nb)
     duration = END_TIME - START_TIME
     avg_duration = duration / nb
-    print("Final stats: %s/%s wins, %.2f%%, duration: %.2f, average duration: %.2f" % (nb_win, nb, percent, duration, avg_duration))
 
-    exit()
+    confidence_factor = 0.98 *2 # 95%
+    error_margin = math.sqrt((percent * (1 - percent)) / nb) * confidence_factor
+
+    print("Final stats: %s/%s wins, %.2f%%, error marin: %.2f%%, duration: %.2f, average duration: %.2f" % (nb_win, nb, percent * 100.0, error_margin * 100.0, duration, avg_duration))
+
+    for consumer in consumers:
+        consumer.terminate()
+
 

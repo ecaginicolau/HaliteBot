@@ -2,8 +2,9 @@ import hlt
 import logging
 from enum import Enum
 
+from bot.monitor import Monitor
 from bot.navigation import calculate_distance_between
-from bot.settings import MAX_TURN_DEFENDER
+from bot.settings import MAX_TURN_DEFENDER, THREAT_WEIGHT, DISTANCE_WEIGHT
 from hlt import constants
 from hlt.entity import Ship
 
@@ -15,7 +16,7 @@ class DroneRole(Enum):
     # List of possible role a Drone can have
     """
 
-    # Unknow, while it's the default role it should not happen
+    # Unknown, while it's the default role it should not happen
     UNKNOWN = "unknown"
     # IDlE, the drone has no current order, it needs to take one
     IDLE = "idle"
@@ -44,6 +45,8 @@ class TargetType(Enum):
     DOCKING = "docking"
     # It can be currently undock (so no need of target?)
     UNDOCKING = "undocking"
+    # It can be currently undock (so no need of target?)
+    POSITION = "position"
 
 
 class Drone(object):
@@ -82,8 +85,10 @@ class Drone(object):
         self.__planet_distance = {}
         # Store the possible threats as a list
         self.__possibles_threats = []
-        # Flag is the drone is alive
+        # Flag if the drone is alive
         self.__is_alive = True
+        # Flag if the drone has been damaged this X turn
+        self.is_damaged = False
 
     def update_ship(self, ship):
         """
@@ -266,6 +271,24 @@ class Drone(object):
         # There are no ships matching this filter
         return None, None
 
+    def get_dangerous_ship(self):
+        """
+        Return the most dangerous ship, calculated by distance & threat level
+        :return: a single ship
+        """
+        target_score = 9999
+        target_distance = 0
+        target = None
+        for distance, enemy_ship in self.__enemy_by_distance:
+            # Simple calculate between the distance & the threat level
+            score = distance * DISTANCE_WEIGHT + Monitor.get_threat_level(enemy_ship.id) * THREAT_WEIGHT
+            if score < target_score:
+                target_score = score
+                target_distance = distance
+                target = enemy_ship
+        # There are no ships matching this filter
+        return target_distance, target_score, target
+
     def calculate_all_ships_distance(self, all_ships):
         """
         Calculate all distance once and for all between all ships
@@ -316,7 +339,7 @@ class Drone(object):
 
     def calculate_all_planets_distance(self, all_planets):
         self.__planet_by_distance = []
-        self.__planet_distance =  {}
+        self.__planet_distance = {}
         for planet_id, planet in all_planets.items():
             # Calculate the distance between the drone and this ship
             distance = calculate_distance_between(self.ship.pos, planet.pos)
@@ -364,11 +387,12 @@ class Drone(object):
         list_score = sorted(list_score, key=lambda l: l[0])
         return list_score
 
-
-
     def get_closest_free_planet(self):
+        """
+        get the closest planet that is free (empty or owner by me)
+        :return:
+        """
         for distance, planet in self.__planet_by_distance:
             if not planet.is_owned() or planet.owner == self.ship.owner:
                 return distance, planet
         return None, None
-

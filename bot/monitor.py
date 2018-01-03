@@ -1,9 +1,9 @@
 import logging
+from copy import copy
 
-from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT
-from bot.navigation import Circle, calculate_distance_between, calculate_angle_between, direction, \
-    calculate_angle_vector
-from hlt.entity import Ship
+from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT, THREAT_BY_TURN_RATIO, DEFENSE_FORWARD, DEFENSE_POINT_RADIUS
+from bot.navigation import Circle, calculate_distance_between, calculate_direction, calculate_angle_vector, calculate_length
+from hlt.entity import Ship, Position
 
 logger = logging.getLogger("monitor")
 
@@ -20,35 +20,36 @@ class Monitor(object):
     The role of this class is to monitor everything in the game and give indication on where to attack / conquer
     """
 
-    def __init__(self, player_id, manager):
+    # Store the player id, will be used to distinguish ships
+    player_id = None
+    # Store the game_map, must be updated every turn
+    game_map = None
+    # Store the current nemesis, must be reset every turn
+    __nemesis = None
+    # Store the threat level of each ship, dictionary indexed by ship_id
+    __threat_level = {}
+    # Store the list of planet for each enemy, indexed by player_id
+    __planets_by_player = {}
+    # Store the list of empty_planet, for comparison purpose
+    __empty_planets = {}
+    # Store all planets indexed by planet_id
+    __all_planets_dict = {}
+    # Store the list of enemy ship indexed by player_id
+    __ship_by_player = {}
+    # Will store all ships in dictionary, should be updated every turn
+    __all_ships_dict = {}
+    # Store the old_position of every ship to calculate vel_x & vel_y, indexed by ship_id
+    __all_ships_old_position = {}
+    # Store the gravitational center of every team
+    __gravitational_center = {}
+
+    @staticmethod
+    def init(player_id):
         # Store the player id, will be used to distinguish ships
-        self.player_id = player_id
-        # Store the manager
-        self.manager = manager
-        # Store the game_map, must be updated everturn
-        self.game_map = None
-        # Store the current nemesis, must be reset every turn
-        self.__nemesis = None
+        Monitor.player_id = player_id
 
-        # Store the threat level of each ship, dictionnay indexed by ship_id
-        self.__threat_level = {}
-
-        # Store the list of planet for each enemy, indexed by player_id
-        self.__planets_by_player = {}
-        # Store the list of empty_planet, for comparison purpose
-        self.__empty_planets = {}
-        # Store all planets indexed by planet_id
-        self.__all_planets_dict = {}
-
-        # Store the list of enemy ship indexed by player_id
-        self.__ship_by_player = {}
-        # Will store all ships in dictionary, should be updated every turn
-        self.__all_ships_dict = {}
-
-        # Store the old_position of every ship to calculate vel_x & vel_y, indexed by ship_id
-        self.__all_ships_old_position = {}
-
-    def update_game(self, game_map):
+    @staticmethod
+    def update_game(game_map):
         """
         [EVERY TURN]
         Update the game_map & other internal variable that will help monitor the current game
@@ -56,48 +57,65 @@ class Monitor(object):
         :return:
         """
         # Update the game_map
-        self.game_map = game_map
+        Monitor.game_map = game_map
 
         # Reset turn's variable
         # Reset the nemesis
-        self.__nemesis = None
+        Monitor.__nemesis = None
         # Planets list & dictionary
-        self.__planets_by_player = {}
-        self.__empty_planets = {}
-        self.__all_planets_dict = {}
+        Monitor.__planets_by_player = {}
+        Monitor.__empty_planets = {}
+        Monitor.__all_planets_dict = {}
         # Loop through all planet, look for empty & owned planets
-        for planet in self.game_map.all_planets():
-            self.__all_planets_dict[planet.id] = planet
+        for planet in Monitor.game_map.all_planets():
+            Monitor.__all_planets_dict[planet.id] = planet
             if not planet.is_owned():
-                self.__empty_planets[planet.id] = planet
+                Monitor.__empty_planets[planet.id] = planet
             else:
                 try:
-                    self.__planets_by_player[planet.owner.id].append(planet.id)
+                    Monitor.__planets_by_player[planet.owner.id].append(planet.id)
                 except KeyError:
-                    self.__planets_by_player[planet.owner.id] = [planet.id]
+                    Monitor.__planets_by_player[planet.owner.id] = [planet.id]
 
+        # gravitational center
         # ship list & dictionary
-        self.__ship_by_player = {}
-        self.__all_ships_dict = {}
-        for ship in self.game_map.all_ships():
-            self.__all_ships_dict[ship.id] = ship
+        Monitor.__ship_by_player = {}
+        Monitor.__all_ships_dict = {}
+        Monitor.__gravitational_center = {}
+        for ship in Monitor.game_map.all_ships():
+            # Update the gravitational center if it exist
             try:
-                self.__ship_by_player[ship.owner.id].append(ship.id)
+                Monitor.__gravitational_center[ship.owner.id] += ship.pos
             except KeyError:
-                self.__ship_by_player[ship.owner.id] = [ship.id]
+                Monitor.__gravitational_center[ship.owner.id] = Circle.zero() + ship.pos
+            # Update the list of all ships & ships by team
+            Monitor.__all_ships_dict[ship.id] = ship
+            try:
+                Monitor.__ship_by_player[ship.owner.id].append(ship.id)
+            except KeyError:
+                Monitor.__ship_by_player[ship.owner.id] = [ship.id]
+
+        # Average the gravitational center
+        for team_id, center in Monitor.__gravitational_center.items():
+            Monitor.__gravitational_center[team_id] = center / len(Monitor.__ship_by_player[team_id])
+            Monitor.__gravitational_center[team_id].radius = len(Monitor.__ship_by_player[team_id])
 
         # Calculate velocity of all ship
-        self.calculate_velocity()
+        Monitor.calculate_velocity()
 
-    def calculate_velocity(self):
+
+
+
+    @staticmethod
+    def calculate_velocity():
         # Keep the list of ship_id that needs to be deleted from old_postion
         need_to_be_deleted = []
 
         # Delete useless old position (not a ship anymore)
-        for ship_id, old_position in self.__all_ships_old_position.items():
+        for ship_id, old_position in Monitor.__all_ships_old_position.items():
             try:
                 # Get the ship, will trigger a KeyERror exception if it doesn't exist anymore
-                ship = self.__all_ships_dict[ship_id]
+                ship = Monitor.__all_ships_dict[ship_id]
                 # Calculate the velocity based on the old positoin
                 ship.velocity = Circle(ship.pos.x - old_position.x, ship.pos.y - old_position.y)
                 # Store the new position for next turn
@@ -107,99 +125,117 @@ class Monitor(object):
 
         # Now delete useless ship
         for ship_id in need_to_be_deleted:
-            del self.__all_ships_old_position[ship_id]
+            del Monitor.__all_ships_old_position[ship_id]
 
         # Update the position of all existing ship
-        for ship_id, ship in self.__all_ships_dict.items():
-            self.__all_ships_old_position[ship_id] = Circle(ship.pos.x, ship.pos.y)
+        for ship_id, ship in Monitor.__all_ships_dict.items():
+            Monitor.__all_ships_old_position[ship_id] = Circle(ship.pos.x, ship.pos.y)
 
-    def get_all_planets_dict(self):
-        return self.__all_planets_dict
+    @staticmethod
+    def get_all_planets_dict():
+        return Monitor.__all_planets_dict
 
-    def get_all_ships_dict(self):
-        return self.__all_ships_dict
+    @staticmethod
+    def get_all_ships_dict():
+        return Monitor.__all_ships_dict
 
-    def get_enemy_ships(self, player_id=None):
+    @staticmethod
+    def get_enemy_ships(player_id=None):
         """
         return the list of all enemies or a single enemy
         :param player_id: if player_id is not None return only the ships of this player, otherwise return all ships
         :return: the list of ships
         """
         if player_id is not None:
-            return self.__ship_by_player[player_id]
+            return Monitor.__ship_by_player[player_id]
         else:
             total_list = []
-            for enemy_id, list_ship in self.__ship_by_player.keys():
+            for enemy_id, list_ship in Monitor.__ship_by_player.keys():
                 # Don't get our ships
-                if enemy_id == self.player_id:
+                if enemy_id == Monitor.player_id:
                     total_list.extend(list_ship)
             return total_list
 
-    def get_free_planets(self):
+    @staticmethod
+    def get_free_planets():
         """
         Return the list of free (empty or owned not full) planet
         :return: list of planet that are free
         """
         list_free_planet = []
-        for planet_id, planet in self.__all_planets_dict.items():
+        for planet_id, planet in Monitor.__all_planets_dict.items():
             # Skip if full
             if planet.is_full():
                 continue
             # Skip if not owned by us or empty
-            if planet.is_owned() and planet.owner.id != self.player_id:
+            if planet.is_owned() and planet.owner.id != Monitor.player_id:
                 continue
             # Otherwise add the the list of free planet
             list_free_planet.append(planet)
         return list_free_planet
 
-    def get_planet(self, planet_id):
+    @staticmethod
+    def get_planet(planet_id):
         """
         return a single planet
         :param planet_id:
         :return:
         """
-        return self.__all_planets_dict[planet_id]
+        return Monitor.__all_planets_dict[planet_id]
 
-    def get_empty_planet(self, planet_id):
+    @staticmethod
+    def get_empty_planet(planet_id):
         """
         return a single planet
         raison a KeyError exception if the planet can't be found in the list of empty planets
         :param planet_id:  the id of the planet
         :return:
         """
-        return self.__empty_planets[planet_id]
+        return Monitor.__empty_planets[planet_id]
 
-    def nb_owned_planets(self):
+    @staticmethod
+    def nb_owned_planets():
         """
         Return the number of planet owned by ourself
         :return:
         """
-        return len(self.__planets_by_player[self.player_id])
+        return len(Monitor.__planets_by_player[Monitor.player_id])
 
-    def nb_empty_planets(self):
+    @staticmethod
+    def nb_empty_planets():
         """
         Return the number of empty planets
         :return:
         """
-        return len(self.__empty_planets)
+        return len(Monitor.__empty_planets)
 
-    def get_team_ships(self):
+    @staticmethod
+    def nb_ships_player(player_id):
+        try:
+            return len(Monitor.__ship_by_player[player_id])
+        except KeyError:
+            return 0
+        player_id
+    @staticmethod
+    def get_team_ships():
         """
         Return the list of ships of our team
         :return:
         """
-        return self.__ship_by_player[self.player_id]
+        return Monitor.__ship_by_player[Monitor.player_id]
 
-    def get_ship(self, ship_id):
+    @staticmethod
+    def get_ship(ship_id):
         """
         return a single ship
         Raise KeyError exception if the ship_id is not found
         :param ship_id:
         :return:
         """
-        return self.__all_ships_dict[ship_id]
+        return Monitor.__all_ships_dict[ship_id]
 
-    def player_with_max_planet(self):
+    @staticmethod
+    def player_with_max_planet():
         """
         Helper function to find the player_id that has the max number of planets
         :return: return both the player_id and the number of planets
@@ -208,7 +244,7 @@ class Monitor(object):
         max_nb = 0
         max_player_id = None
         # Loop through all player to find which has the most planet
-        for player_id, list_planets in self.__planets_by_player.items():
+        for player_id, list_planets in Monitor.__planets_by_player.items():
             nb = len(list_planets)
             if nb > max_nb:
                 max_nb = nb
@@ -216,7 +252,8 @@ class Monitor(object):
 
         return max_player_id, max_nb
 
-    def player_with_max_ship(self):
+    @staticmethod
+    def player_with_max_ship():
         """
         Helper function to find the player_id that has the max number of ships
         :return: return both the player_id and the number of ships
@@ -225,7 +262,7 @@ class Monitor(object):
         max_nb = 0
         max_player_id = None
         # Loop through all player to find which has the most planet
-        for player_id, list_ships in self.__ship_by_player.items():
+        for player_id, list_ships in Monitor.__ship_by_player.items():
             nb = len(list_ships)
             if nb > max_nb:
                 max_nb = nb
@@ -233,38 +270,54 @@ class Monitor(object):
 
         return max_player_id, max_nb
 
-    def gravitational_center(self, player_id):
+    @staticmethod
+    def gravitational_center(player_id):
         """
-        Calculate the center of gravity for a player_id
+        Return the pre-calculated center of gravity for a player_id
             - Sum all X coordinates of every ships
             - Sum all Y coordinates of every ships
-            - Devide by the number of ships
+            - Divide by the number of ships
         :param player_id:
         :return: x  & y of the gratitional center
         """
+        logging.debug(Monitor.__gravitational_center)
+        return Monitor.__gravitational_center[player_id]
 
-        # Get the list of ship
-        list_ship = self.__ship_by_player[player_id]
+    @staticmethod
+    def defense_point():
+        """
+        Find a suitable place for defender to wait for attackers
+        near our center of gravity, toward enemies center of gravity
+        :return:
+        """
+        our_center = Monitor.gravitational_center(Monitor.player_id)
+        enemy_center = Circle.zero()
+        # Loop through all enemy player id
+        nb_ships_enemies = 0
+        for player_id in Monitor.__ship_by_player.keys():
+            # If it's not our team
+            if player_id != Monitor.player_id:
+                enemy_center += Monitor.gravitational_center(player_id)
+                nb_ships_enemies += Monitor.nb_ships_player(player_id)
+        enemy_center /= len(Monitor.__ship_by_player) - 1
 
-        sum_x = 0
-        sum_y = 0
-        for ship_id in list_ship:
-            ship = self.__all_ships_dict[ship_id]
-            sum_x += ship.pos.x
-            sum_y += ship.pos.y
+        direction = enemy_center - our_center
+        ratio = nb_ships_enemies / float(nb_ships_enemies + Monitor.nb_ships_player(player_id))
+        direction = direction / ( calculate_length(direction) * ratio)
+        defense = our_center + direction
+        logging.debug("Defense points: %s, Our center: %s, Enemy center: %s" % (defense,our_center, enemy_center))
+        # Make it a position
+        defense = Position(defense.x, defense.y, DEFENSE_POINT_RADIUS)
+        return defense
 
-        center_x = sum_x / len(list_ship)
-        center_y = sum_y / len(list_ship)
 
-        logger.debug("Calculated the gravitational center of player_id %s: %s,%s" % (player_id, center_x, center_y))
 
-        return Circle(center_x, center_y)
-
-    def find_nemesis(self):
+    @staticmethod
+    def find_nemesis():
         """
         Calculate which player should be targeted next, based on number of ship, number of planets ...
         # Return the current nemesis if already calculated for this turn
-        - if self.nemesis != None
+        - if Monitor.nemesis != None
         # Otherwise calculate it again
         - Depends on hyper parameters, SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT
         - Could count which player has been too close of our frontier
@@ -277,14 +330,14 @@ class Monitor(object):
         """
 
         # If we have already calculated the nemesis this turn
-        if self.__nemesis is not None:
-            return self.__nemesis
+        if Monitor.__nemesis is not None:
+            return Monitor.__nemesis
 
         # If there is only one enemy, no need to calculate anything
-        if len(self.__ship_by_player) == 1:
-            self.__nemesis = list(self.__ship_by_player.keys())[0]
-            return self.__nemesis
-
+        if len(Monitor.__ship_by_player) == 2:
+            for enemy_id in Monitor.__ship_by_player.keys():
+                if enemy_id != Monitor.player_id:
+                    return enemy_id
         """
         # Score calculation
             - score increase with the number of ship, so SHIP_WEIGHT > 0
@@ -296,29 +349,30 @@ class Monitor(object):
         # Biggest score = nemesis
         """
         # Start with getting our own gravitational center
-        team_g_center = self.gravitational_center(self.player_id)
+        team_g_center = Monitor.gravitational_center(Monitor.player_id)
 
         # Store the score for each enemy
         enemy_score = {}
 
         # Loop through all enemies
-        for enemy_id in self.__planets_by_player.keys():
+        for enemy_id in Monitor.__ship_by_player.keys():
+            logging.debug("calculating score of: %s" % enemy_id)
             # This is not an enemy, it's ourself
-            if enemy_id == self.player_id:
+            if enemy_id == Monitor.player_id:
                 # Skip to next player
                 continue
             # Calculate the gravitational_center
-            enemy_g_center = self.gravitational_center(enemy_id)
+            enemy_g_center = Monitor.gravitational_center(enemy_id)
             # Calculate the distance
             distance = calculate_distance_between(team_g_center, enemy_g_center)
             # Get the number of ships
             try:
-                nb_ship = len(self.__ship_by_player[enemy_id])
+                nb_ship = len(Monitor.__ship_by_player[enemy_id])
             except KeyError:
                 nb_ship = 0
             # Get the number of planets
             try:
-                nb_planet = len(self.__planets_by_player[enemy_id])
+                nb_planet = len(Monitor.__planets_by_player[enemy_id])
             except KeyError:
                 nb_planet = 0
             # Calculate the score
@@ -334,71 +388,87 @@ class Monitor(object):
                 max_score = score
                 nemesis = enemy_id
 
-        self.__nemesis = nemesis
-        return self.__nemesis
+        Monitor.__nemesis = nemesis
+        logging.debug("Found a nemesis: %s" % nemesis)
+        return Monitor.__nemesis
 
-    def ship_threat_level(self):
+    @staticmethod
+    def get_threat_level(ship_id):
+        try:
+            return Monitor.__threat_level[ship_id]
+        except KeyError:
+            return NO_THREAT / 2
+
+    @staticmethod
+    def update_threat(ship_id, angle):
+        old_threat = Monitor.get_threat_level(ship_id)
+        logger.debug("old threat: %s" % old_threat)
+        Monitor.__threat_level[ship_id] = old_threat - (90 + angle) * THREAT_BY_TURN_RATIO
+        logger.debug("new threat: %s" % Monitor.__threat_level[ship_id])
+
+    @staticmethod
+    def calculate_threat_level():
         """
         Give a threat level for every enemy ship
         :return:
         """
+        from bot.manager import Manager
 
         # Clean threat level of ship that died
-        for ship_id in list(self.__threat_level.keys()):
+        for ship_id in list(Monitor.__threat_level.keys()):
             try:
                 # Check if the ship can be still found in the list of enemy ship
-                self.__all_ships_dict[ship_id]
+                Monitor.__all_ships_dict[ship_id]
             except KeyError:
                 # Remove the ship if it can't be found
-                del self.__threat_level[ship_id]
-
+                del Monitor.__threat_level[ship_id]
 
         # Store the old threat level for delta calculation
-        # old_threat_level = self.__threat_level
+        # old_threat_level = Monitor.__threat_level
 
         # loop through all enemy ship
-        for enemy_id, list_ship in self.__ship_by_player.items():
+        for enemy_id, list_ship in Monitor.__ship_by_player.items():
             # Don't check our own ships
-            if enemy_id != self.player_id:
+            if enemy_id != Monitor.player_id:
                 for ship_id in list_ship:
-                    ship = self.__all_ships_dict[ship_id]
+                    ship = Monitor.__all_ships_dict[ship_id]
                     # Easy : docked = no threat
                     if ship.docking_status != Ship.DockingStatus.UNDOCKED:
-                        self.__threat_level[ship.id] = NO_THREAT
+                        Monitor.__threat_level[ship.id] = NO_THREAT
                         # Skip to next ship
                         continue
 
                     # Try to guess the target
                     # Skip if the velocity is null
                     if ship.velocity.x == 0 and ship.velocity.y == 0:
-                        self.__threat_level[ship.id] = NO_THREAT
+                        #Monitor.__threat_level[ship.id] = NO_THREAT
                         continue
                     smallest_angle = 360
                     possible_target = None
-                    for other_ship_id, other_ship in self.__all_ships_dict.items():
-                        #If they belong to the same owner, don't look
+                    for other_ship_id, other_ship in Monitor.__all_ships_dict.items():
+                        # If they belong to the same owner, don't look
                         if ship.owner == other_ship.owner:
                             continue
 
                         # Calculate the direction between the 2 ships
-                        delta = direction(ship.pos, other_ship.pos)
+                        delta = calculate_direction(ship.pos, other_ship.pos)
                         # Calculate the angle between the direction and the velocity
                         angle = calculate_angle_vector(ship.velocity, delta)
                         # Get an absolute angle: 10° == 350°
                         angle = min(angle, 360 - angle)
                         # logger.info("Dir: %.2f:%.2f, vel: %.2f:%.2f Angle between ship: %s & ship: %s is %s"  %
                         #  (delta.x, delta.y, ship.velocity.x, ship.velocity.y,ship_id, other_ship_id, angle))
-                        if angle  < smallest_angle:
+                        if angle < smallest_angle:
                             smallest_angle = angle
                             possible_target = other_ship
 
-                    if (possible_target is not None) and (smallest_angle < MIN_ANGLE_TARGET)\
-                            and (possible_target.owner.id == self.player_id):
+                    # Update the threat of that ship, the smallest the angle the more the threat increase (threat value decrease)
+                    logging.debug("Update threat of ship_id: %s with angle: %s" % (ship_id, smallest_angle))
+                    Monitor.update_threat(ship_id, smallest_angle)
+
+                    if (possible_target is not None) and (smallest_angle < MIN_ANGLE_TARGET) and (possible_target.owner.id == Monitor.player_id):
                         # The threat is an estimation of the number it would take to the ship to arrives
                         distance = calculate_distance_between(ship.pos, possible_target.pos)
-                        self.__threat_level[ship.id] = distance
+                        Monitor.__threat_level[ship.id] = distance
                         logger.info("Found a possible target for ship: %s it's: ship %s" % (ship.id, possible_target.id))
-                        self.manager.add_possible_threat(possible_target.id, distance, ship.id)
-                    else:
-                        self.__threat_level[ship.id] = NO_THREAT
-
+                        Manager.add_possible_threat(possible_target.id, distance, ship.id)

@@ -3,7 +3,7 @@ import logging
 import math
 from enum import Enum
 
-from bot.navigation import Circle, navigate, calculate_distance_between, direction, calculate_length
+from bot.navigation import Circle, navigate, calculate_distance_between, calculate_direction
 from bot.settings import INTERMEDIATE_RATIO
 from . import constants
 
@@ -84,8 +84,7 @@ class Planet(Entity):
 
     """
 
-    def __init__(self, planet_id, x, y, hp, radius, docking_spots, current,
-                 remaining, owned, owner, docked_ships):
+    def __init__(self, planet_id, x, y, hp, radius, docking_spots, current, remaining, owned, owner, docked_ships):
         self.id = planet_id
         self.pos = Circle(x, y, radius)
         self.num_docking_spots = docking_spots
@@ -239,8 +238,7 @@ class Ship(Entity):
         DOCKED = 2
         UNDOCKING = 3
 
-    def __init__(self, player_id, ship_id, x, y, hp, vel_x, vel_y,
-                 docking_status, planet, progress, cooldown):
+    def __init__(self, player_id, ship_id, x, y, hp, vel_x, vel_y, docking_status, planet, progress, cooldown):
         self.id = ship_id
         self.pos = Circle(x, y, constants.SHIP_RADIUS)
         self.owner = player_id
@@ -249,8 +247,7 @@ class Ship(Entity):
         self.planet = planet if (docking_status is not Ship.DockingStatus.UNDOCKED) else None
         self._docking_progress = progress
         self._weapon_cooldown = cooldown
-
-        self.velocity = Circle(-1, -1, 0)
+        self.velocity = Circle(vel_x, vel_y, 0)
 
     def thrust(self, magnitude, angle):
         """
@@ -304,6 +301,7 @@ class Ship(Entity):
         :param ignore_planets:  Should we ignore planets in obstacles list
         :param ignore_ghosts:  Should we ignore ghosts in obstacles list
         :param assassin:  Is the ship an assassin
+        :param closest:  Shold we navigate to the target's position? or the closest position within the radius
         :return:
         """
 
@@ -313,14 +311,13 @@ class Ship(Entity):
         else:
             closest_target = target
 
-        final_speed, angle, ghost = navigate(self.pos, closest_target.pos, game_map, speed, max_corrections=max_corrections,
-                                       angular_step=angular_step, ignore_ships=ignore_ships,
-                                       ignore_planets=ignore_planets, ignore_ghosts=ignore_ghosts, assassin=assassin)
+        final_speed, angle, ghost = navigate(self.pos, closest_target.pos, game_map, speed, max_corrections=max_corrections, angular_step=angular_step, ignore_ships=ignore_ships,
+                                             ignore_planets=ignore_planets, ignore_ghosts=ignore_ghosts, assassin=assassin)
 
         # If there is a ghost it means we found a way to navigate
         if ghost is not None:
             # Add the ghost to the map
-            game_map.add_ghost(ghost)
+            game_map.add_ghost((self.pos, ghost))
             # Move
             return self.thrust(final_speed, angle)
 
@@ -328,7 +325,7 @@ class Ship(Entity):
         logging.debug("Can't find a path to %s, so Looking for an intermediate position" % target.id)
         # Calculate the intermediate position
         # Take the direction
-        new_target = direction(self.pos, target.pos)
+        new_target = calculate_direction(self.pos, target.pos)
         # Calculate length of the direction
         distance = calculate_distance_between(self.pos, target.pos)
 
@@ -347,7 +344,7 @@ class Ship(Entity):
                                              ignore_ships=ignore_ships, ignore_planets=ignore_planets,
                                              ignore_ghosts=ignore_ghosts, assassin=assassin)
         if ghost is not None:
-            game_map.add_ghost(ghost)
+            game_map.add_ghost((self.pos, ghost))
         else:
             logging.debug("Couldn't find a path for the intermediate position either")
 
@@ -361,8 +358,7 @@ class Ship(Entity):
         :return: True if can dock, False otherwise
         :rtype: bool
         """
-        return calculate_distance_between(self.pos, planet.pos) \
-               <= planet.pos.radius + constants.DOCK_RADIUS + constants.SHIP_RADIUS
+        return calculate_distance_between(self.pos, planet.pos) <= planet.pos.radius + constants.DOCK_RADIUS + constants.SHIP_RADIUS
 
     def _link(self, players, planets):
         """
@@ -429,8 +425,8 @@ class Position(Entity):
     :ivar owner: Unused.
     """
 
-    def __init__(self, x, y):
-        self.pos = Circle(x, y, 0)
+    def __init__(self, x, y, radius = 0):
+        self.pos = Circle(x, y, radius)
         self.health = None
         self.owner = None
         self.id = None

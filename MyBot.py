@@ -3,9 +3,10 @@ from datetime import datetime
 
 import hlt
 from bot.manager import Manager
+from bot.monitor import Monitor
 
 # This needs to be before the logger
-game = hlt.Game("Rampa-Managed-Nemesis")
+game = hlt.Game("Rampa")
 
 logging.info("Starting Rampa Bot")
 logger = logging.getLogger("bot")
@@ -13,8 +14,7 @@ logger = logging.getLogger("bot")
 # Will catch any exception easily
 try:
 
-    manager = None
-    monitor = None
+    first_turn = True
     while True:
         START_TIME = datetime.utcnow()
         logger.debug("START NEW TURN")
@@ -25,38 +25,40 @@ try:
             break
 
         # Create the drone manager only once
-        if manager is None:
-            manager = Manager(game_map.get_me().id)
+        if first_turn:
+            Manager.init(game_map.get_me().id)
+            Monitor.init(game_map.get_me().id)
+            first_turn = False
 
         # Reset the list of command
         command_queue = []
 
         # Update the game_map in the manager
-        manager.update_game_map(game_map, START_TIME)
+        Manager.update_game_map(game_map, START_TIME)
         # Calculate the distance between all ships once and for all
-        manager.calculate_all_drones_distance()
+        Manager.calculate_all_drones_distance()
         # Print the role status
-        manager.role_status()
+        Manager.role_status()
         # Check damaged ship
-        manager.check_damaged_drone()
+        Manager.check_damaged_drone()
         # Check defenders timer
-        manager.check_defender_timer()
+        # Manager.check_defender_timer()
         # Give role to IDLE drone
-        manager.give_role_idle_drone()
+        Manager.give_role_idle_drone()
 
         # Order conqueror to conquer
-        manager.order_conquerors()
+        Manager.order_conquerors()
         # Order attackers to attack
-        manager.order_assassin()
+        Manager.order_assassin()
         # Order attackers to attack
-        manager.order_attacker()
+        Manager.order_attacker()
         # Order defender to defend
-        manager.order_defender()
+        Manager.order_defender()
         # Order miner to mine
-        manager.order_miner()
+        Manager.order_miner()
 
         # Create all commands
-        command_queue = manager.create_command_queue()
+        command_queue = Manager.create_command_queue()
         # Send the command
         game.send_command_queue(command_queue)
 
@@ -69,5 +71,3 @@ try:
 except:
     logging.exception("BIG CRASH")
 
-logger.error("total_old_duration: %s" % hlt.entity.total_old_navigation)
-logger.error("total_new_duration: %s" % hlt.entity.total_new_navigation)
