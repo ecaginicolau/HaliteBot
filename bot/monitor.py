@@ -1,7 +1,8 @@
 import logging
 from copy import copy
 
-from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT, THREAT_BY_TURN_RATIO, DEFENSE_FORWARD, DEFENSE_POINT_RADIUS
+from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT, THREAT_BY_TURN_RATIO, DEFENSE_FORWARD, DEFENSE_POINT_RADIUS, \
+    INITIAL_SAFE_DISTANCE, MIN_SHIP_ATTACKERS
 from bot.navigation import Circle, calculate_distance_between, calculate_direction, calculate_angle_vector, calculate_length
 from hlt.entity import Ship, Position
 
@@ -103,7 +104,25 @@ class Monitor(object):
         # Calculate velocity of all ship
         Monitor.calculate_velocity()
 
-
+    @staticmethod
+    def initial_turn():
+        global MIN_SHIP_ATTACKERS
+        # Get the minimum distance between us and other player
+        min_distance = 999
+        # Get our center of gravitiy
+        our_center = Monitor.__gravitational_center[Monitor.player_id]
+        # Loop through all other player
+        for team_id, team_center in Monitor.__gravitational_center.items():
+            # Dont look at our own ships
+            if team_id == Monitor.player_id:
+                distance = calculate_distance_between(our_center, team_center)
+                if distance < min_distance:
+                    min_distance = distance
+        # Check that no team starts too close
+        if min_distance < INITIAL_SAFE_DISTANCE:
+            MIN_SHIP_ATTACKERS = 1
+        else:
+            MIN_SHIP_ATTACKERS = 0
 
 
     @staticmethod
@@ -302,8 +321,8 @@ class Monitor(object):
         enemy_center /= len(Monitor.__ship_by_player) - 1
 
         direction = enemy_center - our_center
-        ratio = nb_ships_enemies / float(nb_ships_enemies + Monitor.nb_ships_player(player_id))
-        direction = direction / ( calculate_length(direction) * ratio)
+        ratio = (nb_ships_enemies * 2) / float(nb_ships_enemies * 2 + Monitor.nb_ships_player(player_id))
+        direction = direction / (calculate_length(direction) * ratio)
         defense = our_center + direction
         logging.debug("Defense points: %s, Our center: %s, Enemy center: %s" % (defense,our_center, enemy_center))
         # Make it a position

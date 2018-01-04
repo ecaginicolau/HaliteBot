@@ -265,7 +265,7 @@ class Manager(object):
                 # Calculate the ratio of attacker / total drone
                 logging.debug("current_ratio: %s" % Manager.ratio_offense())
                 # First make sure there are enough attacker
-                while ((Manager.nb_offense() < MIN_SHIP_ATTACKERS) or (Manager.ratio_offense() < MAX_RATIO_SHIP_ATTACKERS)) and (Manager.nb_drone_role(DroneRole.IDLE) > 0):
+                while ((Manager.nb_offense() < MIN_SHIP_ATTACKERS) or (Manager.ratio_offense() + 1 < MAX_RATIO_SHIP_ATTACKERS)) and (Manager.nb_drone_role(DroneRole.IDLE) > 0):
                     # Change an IDLE Drone to attacker
                     # Pick a IDLE drone
                     # TODO Look for the closest ship to an enemy
@@ -306,7 +306,13 @@ class Manager(object):
                 list_ship_id = list(Manager.__all_role_drones[DroneRole.IDLE])
                 for ship_id in list_ship_id:
                     drone = Manager.__all_drones[ship_id]
-                    Manager.change_drone_role(drone, DroneRole.ATTACKER)
+                    # If there are more assassin than attacker
+                    if Manager.nb_drone_role(DroneRole.ASSASSIN) >= Manager.nb_drone_role(DroneRole.ATTACKER):
+                        # Create an assassin
+                        Manager.change_drone_role(drone, DroneRole.ATTACKER)
+                    else:
+                        # Else create an attacker
+                        Manager.change_drone_role(drone, DroneRole.ASSASSIN)
         Manager.role_status()
 
     @staticmethod
@@ -664,7 +670,7 @@ class Manager(object):
                     # Move toward the defense point
                     defense_point = Monitor.defense_point()
                     # Calculate position because there are no cache for this distance
-                    distance =  calculate_distance_between(drone.ship.pos, defense_point.pos)
+                    distance = calculate_distance_between(drone.ship.pos, defense_point.pos)
                     # Make it the new target (ship type?)
                     drone.assign_target(defense_point, distance, target_type=TargetType.POSITION)
 

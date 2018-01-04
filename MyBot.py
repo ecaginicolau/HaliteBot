@@ -24,23 +24,28 @@ try:
             # ValueError means game is over
             break
 
+        # Reset the list of command
+        command_queue = []
+
+
         # Create the drone manager only once
         if first_turn:
             Manager.init(game_map.get_me().id)
             Monitor.init(game_map.get_me().id)
+            Manager.update_game_map(game_map, START_TIME)
+            Monitor.initial_turn()
             first_turn = False
+        else:
+            # Update the game_map in the manager
+            Manager.update_game_map(game_map, START_TIME)
 
-        # Reset the list of command
-        command_queue = []
 
-        # Update the game_map in the manager
-        Manager.update_game_map(game_map, START_TIME)
         # Calculate the distance between all ships once and for all
         Manager.calculate_all_drones_distance()
         # Print the role status
         Manager.role_status()
         # Check damaged ship
-        # Manager.check_damaged_drone()
+        Manager.check_damaged_drone()
         # Check defenders timer
         # Manager.check_defender_timer()
         # Give role to IDLE drone

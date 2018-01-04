@@ -18,6 +18,8 @@ THREAT_BY_TURN_RATIO = 0.1
 DEFENSE_FORWARD = 30
 # Radius of the defense position
 DEFENSE_POINT_RADIUS = 5
+# Check that no team starts too close, take x turns to arrive
+INITIAL_SAFE_DISTANCE = 120
 """
 # Manager parameters
 """
@@ -25,7 +27,7 @@ DEFENSE_POINT_RADIUS = 5
 # Always try to have at least 1 ship attacking (if not alone?)
 MIN_SHIP_ATTACKERS = 0
 # Even if there are still some available planet, send a portion of the ship to attack
-MAX_RATIO_SHIP_ATTACKERS = 0.15
+MAX_RATIO_SHIP_ATTACKERS = 0.20
 # Radius inside which an enemy must be for a drone to become a defender
 DEFENDER_RADIUS = 10
 # Special radius for miner to react faster
@@ -37,7 +39,7 @@ NB_SHIP_THRESHOLD = 100
 # Should a miner stop miner to become a defender
 MINER_CAN_DEFEND = False
 # If no enemy in this radius of an attack, convert it to a conqueror
-SAFE_ZONE_RADIUS = 70 #10 turns?
+SAFE_ZONE_RADIUS = 70  # 10 turns?
 # If we can't find a path to the target look for a path in an intermediate position
 INTERMEDIATE_RATIO = 0.5
 # Minimum score to trigger a defensive move
