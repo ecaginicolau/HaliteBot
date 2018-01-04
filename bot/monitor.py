@@ -176,6 +176,19 @@ class Monitor(object):
             return total_list
 
     @staticmethod
+    def map_has_available_spots():
+        """
+        This function check if at least 1 planet has a free spot, no need to create conqueror otherwise
+        :return: true if there is at least one planet with a free spot
+        """
+        list_planets = Monitor.get_free_planets()
+        for planet in list_planets:
+            if planet.nb_available_docking_spots() > 0:
+                return True
+
+        return False
+
+    @staticmethod
     def get_free_planets():
         """
         Return the list of free (empty or owned not full) planet

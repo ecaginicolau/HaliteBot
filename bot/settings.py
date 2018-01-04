@@ -46,6 +46,11 @@ INTERMEDIATE_RATIO = 0.5
 MIN_SCORE_DEFENSE = 150
 # If the distance between the ship and it's target is bigger than that, then try to predict its destination: 28 ~4 turn max speed
 FOLLOW_DISTANCE = 28
+# ratio of offensive ship
+TARGET_RATIO_ATTACKER = 0.4
+TARGET_RATIO_ASSASSIN = 0.2
+TARGET_RATIO_DEFENDER = 0.4
+
 """
 # Drone parameters
 """
