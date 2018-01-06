@@ -24,6 +24,7 @@ class Map:
         self._players = {}
         self._planets = {}
         self._ghosts = {}
+        self.turn = 0
 
     def get_me(self):
         """
@@ -84,7 +85,7 @@ class Map:
         for celestial_object in self.all_planets() + self.all_ships():
             celestial_object._link(self._players, self._planets)
 
-    def _parse(self, map_string):
+    def _parse(self, map_string, turn):
         """
         Parse the map description from the game.
 
@@ -92,7 +93,7 @@ class Map:
         :return: nothing
         """
         tokens = map_string.split()
-
+        self.turn = turn
         self._ghosts = []
         self._players, tokens = Player._parse(tokens)
         self._planets, tokens = entity.Planet._parse(tokens)

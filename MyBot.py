@@ -4,6 +4,7 @@ from datetime import datetime
 import hlt
 from bot.manager import Manager
 from bot.monitor import Monitor
+from bot.influence import Influence
 
 # This needs to be before the logger
 game = hlt.Game("Rampa")
@@ -32,6 +33,7 @@ try:
         if first_turn:
             Manager.init(game_map.get_me().id)
             Monitor.init(game_map.get_me().id)
+            Influence.init(game_map.get_me().id)
             Manager.update_game_map(game_map, START_TIME)
             Monitor.initial_turn()
             first_turn = False
@@ -39,11 +41,8 @@ try:
             # Update the game_map in the manager
             Manager.update_game_map(game_map, START_TIME)
 
-
         # Calculate the distance between all ships once and for all
         Manager.calculate_all_drones_distance()
-        # Print the role status
-        Manager.role_status()
         # Check damaged ship
         Manager.check_damaged_drone()
         # Check defenders timer

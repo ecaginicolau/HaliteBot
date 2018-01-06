@@ -24,10 +24,6 @@ INITIAL_SAFE_DISTANCE = 120
 # Manager parameters
 """
 # Some global
-# Always try to have at least 1 ship attacking (if not alone?)
-MIN_SHIP_ATTACKERS = 0
-# Even if there are still some available planet, send a portion of the ship to attack
-MAX_RATIO_SHIP_ATTACKERS = 0.20
 # Radius inside which an enemy must be for a drone to become a defender
 DEFENDER_RADIUS = 10
 # Special radius for miner to react faster
@@ -46,10 +42,19 @@ INTERMEDIATE_RATIO = 0.5
 MIN_SCORE_DEFENSE = 150
 # If the distance between the ship and it's target is bigger than that, then try to predict its destination: 28 ~4 turn max speed
 FOLLOW_DISTANCE = 28
-# ratio of offensive ship
-TARGET_RATIO_ATTACKER = 0.4
-TARGET_RATIO_ASSASSIN = 0.2
-TARGET_RATIO_DEFENDER = 0.4
+
+# Always try to have at least 1 ship attacking (if not alone?)
+MIN_SHIP_ATTACKERS = 0
+# Even if there are still some available planet, send a portion of the ship to attack
+MAX_RATIO_SHIP_ATTACKERS = 0.10
+# ratio of offensive ship at the start of the game (before the game is full)
+EARLY_RATIO_ATTACKER = 0.6
+EARLY_RATIO_ASSASSIN = 0.4
+EARLY_RATIO_DEFENDER = 0.0
+# ratio of offensive ship at the end of the game (after the game is full)
+LATE_RATIO_ATTACKER = 0.4
+LATE_RATIO_ASSASSIN = 0.2
+LATE_RATIO_DEFENDER = 0.4
 
 """
 # Drone parameters
@@ -60,8 +65,27 @@ MAX_TURN_DEFENDER = 5
 DISTANCE_WEIGHT = 2
 THREAT_WEIGHT = 1
 
+# Planet score
+SCORE_NB_DOCKING_SPOTS = 1
+SCORE_NB_SHIP_ONGOING = 1
+SCORE_DISTANCE_CENTER = 0.5
+
 """"
 # Navigation parameters
 """
 # The radius the assassin tries to avoid enemy ship, 7+? 14+?
-ASSASSIN_AVOID_RADIUS = 16
+ASSASSIN_AVOID_RADIUS = 25
+
+"""
+# Influence parameters
+"""
+# The radius influence of a ship
+SHIP_INFLUENCE = 10
+# The radius influence of a planet
+PLANET_INFLUENCE = 10
+# The influence of an empty planet
+INFLUENCE_EMPTY_PLANET = 32
+INFLUENCE_ZONE = 32
+INFLUENCE_STEP = 5
+# Threshold after which the point is considered inside the influence zone
+INFLUENCE_THRESHOLD = 0

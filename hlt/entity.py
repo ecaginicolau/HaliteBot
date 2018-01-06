@@ -321,8 +321,6 @@ class Ship(Entity):
             # Move
             return self.thrust(final_speed, angle)
 
-        # Retry with an intermediate position
-        logging.debug("Can't find a path to %s, so Looking for an intermediate position" % target.id)
         # Calculate the intermediate position
         # Take the direction
         new_target = calculate_direction(self.pos, target.pos)
@@ -333,7 +331,6 @@ class Ship(Entity):
         new_speed = min(speed, distance)
         new_speed *= INTERMEDIATE_RATIO
         # Apply a ratio to find an intermediate point at "speed" distance
-        logging.debug("Going at a new point located at 'speed:%s' distance of the ship" % new_speed)
         new_target.x *= new_speed / distance
         new_target.y *= new_speed / distance
         # Add the direction to the ship position
@@ -345,8 +342,6 @@ class Ship(Entity):
                                              ignore_ghosts=ignore_ghosts, assassin=assassin)
         if ghost is not None:
             game_map.add_ghost((self.pos, ghost))
-        else:
-            logging.debug("Couldn't find a path for the intermediate position either")
 
         return self.thrust(final_speed, angle)
 

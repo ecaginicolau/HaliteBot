@@ -54,7 +54,7 @@ class Task:
         :return:
         """
         #cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" """
-        cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteBotV43\\run_bot.bat" """
+        cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteBotV59\\run_bot.bat" """
         #cmd = """halite.exe -r -q -d "384 256" "python MyBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" "python .\opponents\ClosestTargetBot.py" """
         output = subprocess.check_output(cmd).decode("ascii")
         data = json.loads(output)

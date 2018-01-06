@@ -5,12 +5,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="eaf44f6c-0da1-43ab-b970-6b04b3a999b9" name="Default" comment="">
+      <change beforePath="" afterPath="$PROJECT_DIR$/.idea/other.xml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/bot/influence.py" />
       <change beforePath="$PROJECT_DIR$/.idea/HaliteBot.iml" afterPath="$PROJECT_DIR$/.idea/HaliteBot.iml" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/MyBot.py" afterPath="$PROJECT_DIR$/MyBot.py" />
-      <change beforePath="$PROJECT_DIR$/bot/manager.py" afterPath="$PROJECT_DIR$/bot/manager.py" />
-      <change beforePath="$PROJECT_DIR$/bot/monitor.py" afterPath="$PROJECT_DIR$/bot/monitor.py" />
+      <change beforePath="$PROJECT_DIR$/bot/drone.py" afterPath="$PROJECT_DIR$/bot/drone.pyx" />
+      <change beforePath="$PROJECT_DIR$/bot/manager.py" afterPath="$PROJECT_DIR$/bot/manager.pyx" />
+      <change beforePath="$PROJECT_DIR$/bot/monitor.py" afterPath="$PROJECT_DIR$/bot/monitor.pyx" />
       <change beforePath="$PROJECT_DIR$/bot/settings.py" afterPath="$PROJECT_DIR$/bot/settings.py" />
+      <change beforePath="$PROJECT_DIR$/hlt/entity.py" afterPath="$PROJECT_DIR$/hlt/entity.py" />
+      <change beforePath="$PROJECT_DIR$/hlt/game_map.py" afterPath="$PROJECT_DIR$/hlt/game_map.py" />
+      <change beforePath="$PROJECT_DIR$/hlt/networking.py" afterPath="$PROJECT_DIR$/hlt/networking.py" />
+      <change beforePath="$PROJECT_DIR$/run_game.bat" afterPath="$PROJECT_DIR$/run_game.bat" />
+      <change beforePath="$PROJECT_DIR$/setup.py" afterPath="$PROJECT_DIR$/setup.py" />
+      <change beforePath="$PROJECT_DIR$/tools/mass_run.py" afterPath="$PROJECT_DIR$/tools/mass_run.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,55 +29,112 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/HaliteBot$packager.coverage" NAME="packager Coverage Results" MODIFIED="1515048523328" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
+    <SUITE FILE_PATH="coverage/HaliteBot$packager.coverage" NAME="packager Coverage Results" MODIFIED="1515069929377" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
     <SUITE FILE_PATH="coverage/HaliteBot$tests.coverage" NAME="tests Coverage Results" MODIFIED="1514876813575" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/HaliteBot$mass_run.coverage" NAME="mass_run Coverage Results" MODIFIED="1514958713001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/HaliteBot$mass_run.coverage" NAME="mass_run Coverage Results" MODIFIED="1515246026625" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/HaliteBot$MyBot.coverage" NAME="MyBot Coverage Results" MODIFIED="1514491314943" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/HaliteBot$distance_test.coverage" NAME="distance_test Coverage Results" MODIFIED="1514401115149" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/HaliteBot$influence.coverage" NAME="influence Coverage Results" MODIFIED="1515247965079" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bot" />
+    <SUITE FILE_PATH="coverage/HaliteBot$test_snake.coverage" NAME="test_snake Coverage Results" MODIFIED="1515252852665" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="manager.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bot/manager.py">
+      <file leaf-file-name="manager.pyx" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/bot/manager.pyx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="554">
-              <caret line="670" column="47" lean-forward="false" selection-start-line="670" selection-start-column="47" selection-end-line="670" selection-end-column="47" />
+            <state relative-caret-position="362">
+              <caret line="334" column="0" lean-forward="false" selection-start-line="334" selection-start-column="0" selection-end-line="334" selection-end-column="0" />
               <folding>
                 <element signature="e#17#31#0" expanded="true" />
+                <marker date="1515266573905" expanded="true" signature="19890:19892" ph="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="drone.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/bot/drone.py">
+      <file leaf-file-name="drone.pyx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bot/drone.pyx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="334">
-              <caret line="381" column="58" lean-forward="true" selection-start-line="381" selection-start-column="58" selection-end-line="381" selection-end-column="58" />
-              <folding />
+            <state relative-caret-position="442">
+              <caret line="394" column="23" lean-forward="false" selection-start-line="394" selection-start-column="23" selection-end-line="394" selection-end-column="23" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+                <marker date="1515261039157" expanded="true" signature="1685:3183" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="3217:3460" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="3485:3516" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="3570:3630" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="3659:3850" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="3882:4076" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="4102:4271" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="4304:5036" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="5074:5266" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="5337:6759" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="6793:6928" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="6953:7061" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="7092:8051" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="8188:9375" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="9410:10115" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="10171:11177" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="11218:11561" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="11595:11943" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="12003:12618" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="12663:12873" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="12912:12952" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="12996:13408" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="13472:14766" ph="..." />
+                <marker date="1515261039157" expanded="true" signature="14806:15112" ph="..." />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="entity.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/hlt/entity.py">
+      <file leaf-file-name="influence.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bot/influence.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5712">
-              <caret line="343" column="66" lean-forward="false" selection-start-line="343" selection-start-column="66" selection-end-line="343" selection-end-column="66" />
-              <folding />
+            <state relative-caret-position="255">
+              <caret line="73" column="22" lean-forward="false" selection-start-line="73" selection-start-column="22" selection-end-line="73" selection-end-column="22" />
+              <folding>
+                <element signature="e#0#110#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="run_game_4players.bat" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/run_game_4players.bat">
+      <file leaf-file-name="monitor.pyx" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bot/monitor.pyx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
-              <caret line="8" column="1" lean-forward="false" selection-start-line="8" selection-start-column="1" selection-end-line="8" selection-end-column="1" />
-              <folding />
+            <state relative-caret-position="357">
+              <caret line="539" column="28" lean-forward="false" selection-start-line="539" selection-start-column="8" selection-end-line="539" selection-end-column="28" />
+              <folding>
+                <element signature="e#0#14#0" expanded="true" />
+                <marker date="1515266440057" expanded="true" signature="1804:1907" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="1957:4303" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="4346:5126" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="5175:6327" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="6378:6420" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="6469:6509" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="6569:7171" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="7225:7616" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="7815:8413" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="8463:8614" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="8852:9116" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="9163:9324" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="9371:9499" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="9554:9673" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="9807:9952" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="9998:10202" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="10255:10793" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="10844:11371" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="11431:11802" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="11846:13093" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="13138:16238" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="16292:16492" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="16555:16616" ph="..." />
+                <marker date="1515266440057" expanded="true" signature="16799:20780" ph="..." />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -76,29 +142,7 @@
       <file leaf-file-name="run_game.bat" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/run_game.bat">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="221">
-              <caret line="13" column="36" lean-forward="false" selection-start-line="13" selection-start-column="36" selection-end-line="13" selection-end-column="36" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="monitor.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bot/monitor.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="537">
-              <caret line="323" column="17" lean-forward="false" selection-start-line="323" selection-start-column="17" selection-end-line="323" selection-end-column="17" />
-              <folding>
-                <element signature="e#0#14#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="settings.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bot/settings.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="241">
+            <state relative-caret-position="323">
               <caret line="19" column="0" lean-forward="false" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
               <folding />
             </state>
@@ -108,8 +152,8 @@
       <file leaf-file-name="MyBot.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MyBot.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="394">
-              <caret line="34" column="31" lean-forward="false" selection-start-line="34" selection-start-column="31" selection-end-line="34" selection-end-column="31" />
+            <state relative-caret-position="-102">
+              <caret line="18" column="15" lean-forward="false" selection-start-line="18" selection-start-column="15" selection-end-line="18" selection-end-column="15" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
               </folding>
@@ -120,18 +164,18 @@
       <file leaf-file-name="navigation.pyx" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bot/navigation.pyx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="409">
-              <caret line="201" column="58" lean-forward="false" selection-start-line="201" selection-start-column="58" selection-end-line="201" selection-end-column="58" />
+            <state relative-caret-position="887">
+              <caret line="218" column="35" lean-forward="false" selection-start-line="218" selection-start-column="35" selection-end-line="218" selection-end-column="35" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="game_map.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/hlt/game_map.py">
+      <file leaf-file-name="settings.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/bot/settings.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2788">
-              <caret line="166" column="17" lean-forward="false" selection-start-line="166" selection-start-column="8" selection-end-line="166" selection-end-column="17" />
+            <state relative-caret-position="561">
+              <caret line="90" column="23" lean-forward="false" selection-start-line="90" selection-start-column="23" selection-end-line="90" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -148,18 +192,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>Monitor.</find>
-      <find>self.monitor</find>
-      <find>(self)</find>
-      <find>.manager</find>
-      <find>self,</find>
-      <find>Monitor.manager</find>
-      <find>check_drone_defense</find>
-      <find>self</find>
-      <find>manager</find>
-      <find>threat</find>
-      <find>direction</find>
-      <find>angle</find>
       <find>add</find>
       <find>check_defender_timer</find>
       <find>manager.</find>
@@ -175,9 +207,21 @@
       <find>1[</find>
       <find>add_ghost</find>
       <find>all_ghost</find>
-      <find>logging</find>
       <find>INITIAL_SAFE_DISTANCE</find>
       <find>DEFENDER</find>
+      <find>logg</find>
+      <find>loggin</find>
+      <find>defense_point</find>
+      <find>get_next_offensive_role</find>
+      <find>get_ship</find>
+      <find>__empty_planets</find>
+      <find>__ship_by_player</find>
+      <find>NEW TURN</find>
+      <find>turn</find>
+      <find>__planets_by_player</find>
+      <find>logging</find>
+      <find>calculate_all_planets_distance</find>
+      <find>is_damaged</find>
     </findStrings>
     <replaceStrings>
       <replace>cpdef</replace>
@@ -220,24 +264,29 @@
         <option value="$PROJECT_DIR$/bot/__init__.py" />
         <option value="$PROJECT_DIR$/monitor.py" />
         <option value="$PROJECT_DIR$/manager.py" />
-        <option value="$PROJECT_DIR$/setup.py" />
         <option value="$PROJECT_DIR$/install.sh" />
         <option value="$PROJECT_DIR$/tools/packager.py" />
         <option value="$PROJECT_DIR$/bot/hyperparameters.py" />
-        <option value="$PROJECT_DIR$/hlt/game_map.py" />
-        <option value="$PROJECT_DIR$/hlt/networking.py" />
         <option value="$PROJECT_DIR$/bot/squad.py" />
-        <option value="$PROJECT_DIR$/tools/mass_run.py" />
         <option value="$PROJECT_DIR$/run_game_4players.bat" />
         <option value="$PROJECT_DIR$/tests.py" />
-        <option value="$PROJECT_DIR$/hlt/entity.py" />
         <option value="$PROJECT_DIR$/bot/drone.py" />
-        <option value="$PROJECT_DIR$/run_game.bat" />
         <option value="$PROJECT_DIR$/bot/navigation.pyx" />
-        <option value="$PROJECT_DIR$/MyBot.py" />
-        <option value="$PROJECT_DIR$/bot/settings.py" />
-        <option value="$PROJECT_DIR$/bot/manager.py" />
+        <option value="$PROJECT_DIR$/tools/mass_run.py" />
+        <option value="$PROJECT_DIR$/hlt/entity.py" />
         <option value="$PROJECT_DIR$/bot/monitor.py" />
+        <option value="$PROJECT_DIR$/run_game.bat" />
+        <option value="$PROJECT_DIR$/bot/manager.py" />
+        <option value="$PROJECT_DIR$/setup.py" />
+        <option value="$PROJECT_DIR$/hlt/game_map.py" />
+        <option value="$PROJECT_DIR$/hlt/networking.py" />
+        <option value="$PROJECT_DIR$/test_snake.py" />
+        <option value="$PROJECT_DIR$/bot/drone.pyx" />
+        <option value="$PROJECT_DIR$/bot/settings.py" />
+        <option value="$PROJECT_DIR$/MyBot.py" />
+        <option value="$PROJECT_DIR$/bot/influence.py" />
+        <option value="$PROJECT_DIR$/bot/monitor.pyx" />
+        <option value="$PROJECT_DIR$/bot/manager.pyx" />
       </list>
     </option>
   </component>
@@ -248,10 +297,10 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1863" />
-    <option name="y" value="744" />
-    <option name="width" value="1932" />
-    <option name="height" value="1364" />
+    <option name="x" value="1785" />
+    <option name="y" value="842" />
+    <option name="width" value="2040" />
+    <option name="height" value="1283" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -268,8 +317,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -286,31 +333,25 @@
               <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
               <item name="HaliteBot" type="462c0819:PsiDirectoryNode" />
               <item name="bot" type="462c0819:PsiDirectoryNode" />
-              <item name="manager.py" type="8704e2dd:PyFileNode" />
+              <item name="drone.pyx" type="8704e2dd:PyFileNode" />
             </path>
             <path>
               <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
               <item name="HaliteBot" type="462c0819:PsiDirectoryNode" />
               <item name="bot" type="462c0819:PsiDirectoryNode" />
-              <item name="manager.py" type="8704e2dd:PyFileNode" />
+              <item name="manager.pyx" type="8704e2dd:PyFileNode" />
+            </path>
+            <path>
+              <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
+              <item name="HaliteBot" type="462c0819:PsiDirectoryNode" />
+              <item name="bot" type="462c0819:PsiDirectoryNode" />
+              <item name="manager.pyx" type="8704e2dd:PyFileNode" />
               <item name="Manager" type="dd8bbb05:PyElementNode" />
             </path>
             <path>
               <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
               <item name="HaliteBot" type="462c0819:PsiDirectoryNode" />
-              <item name="bot" type="462c0819:PsiDirectoryNode" />
-              <item name="monitor.py" type="8704e2dd:PyFileNode" />
-            </path>
-            <path>
-              <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HaliteBot" type="462c0819:PsiDirectoryNode" />
               <item name="hlt" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HaliteBot" type="462c0819:PsiDirectoryNode" />
-              <item name="hlt" type="462c0819:PsiDirectoryNode" />
-              <item name="entity.py" type="8704e2dd:PyFileNode" />
             </path>
             <path>
               <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
@@ -328,18 +369,22 @@
             <path>
               <item name="HaliteBot" type="b2602c69:ProjectViewProjectNode" />
               <item name="HaliteBot" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
+              <item name="hlt" type="462c0819:PsiDirectoryNode" />
+              <item name="game_map.py" type="8704e2dd:PyFileNode" />
+              <item name="Player" type="dd8bbb05:PyElementNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/hyperparameters.py" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -362,7 +407,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.packager">
+  <component name="RunManager" selected="Python.test_snake">
     <configuration name="MyBot" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -396,6 +441,25 @@
       <module name="HaliteBot" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="D:\Media\SkyDrive\HaliteBot\tests\distance_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
+    <configuration name="influence" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bot" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="HaliteBot" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/bot/influence.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -439,6 +503,25 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
+    <configuration name="test_snake" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="HaliteBot" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_snake.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
     <configuration name="tests" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -458,18 +541,22 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
-    <list size="5">
+    <list size="7">
       <item index="0" class="java.lang.String" itemvalue="Python.mass_run" />
       <item index="1" class="java.lang.String" itemvalue="Python.packager" />
       <item index="2" class="java.lang.String" itemvalue="Python.distance_test" />
       <item index="3" class="java.lang.String" itemvalue="Python.MyBot" />
       <item index="4" class="java.lang.String" itemvalue="Python.tests" />
+      <item index="5" class="java.lang.String" itemvalue="Python.influence" />
+      <item index="6" class="java.lang.String" itemvalue="Python.test_snake" />
     </list>
     <recent_temporary>
-      <list size="3">
-        <item index="0" class="java.lang.String" itemvalue="Python.tests" />
-        <item index="1" class="java.lang.String" itemvalue="Python.MyBot" />
-        <item index="2" class="java.lang.String" itemvalue="Python.distance_test" />
+      <list size="5">
+        <item index="0" class="java.lang.String" itemvalue="Python.test_snake" />
+        <item index="1" class="java.lang.String" itemvalue="Python.influence" />
+        <item index="2" class="java.lang.String" itemvalue="Python.tests" />
+        <item index="3" class="java.lang.String" itemvalue="Python.MyBot" />
+        <item index="4" class="java.lang.String" itemvalue="Python.distance_test" />
       </list>
     </recent_temporary>
   </component>
@@ -490,17 +577,18 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1863" y="744" width="1932" height="1364" extended-state="0" />
+    <frame x="1785" y="842" width="2040" height="1283" extended-state="0" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3586777" sideWeight="0.57051283" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32881662" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3586777" sideWeight="0.42254272" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3586777" sideWeight="0.57745725" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30929488" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32860938" sideWeight="0.45858586" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3578388" sideWeight="0.41414142" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32860938" sideWeight="0.54141414" order="9" side_tool="true" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2651515" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32772365" sideWeight="0.48985043" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="SciView" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -510,7 +598,6 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32806325" sideWeight="0.48985043" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
     </layout>
@@ -523,6 +610,12 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/bot/drone.pyx</url>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -530,28 +623,11 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="13" />
+      <option name="time" value="14" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/tests/distance_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="629">
-          <caret line="37" column="17" lean-forward="false" selection-start-line="37" selection-start-column="17" selection-end-line="37" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/socket_networking.py" />
-    <entry file="file://$PROJECT_DIR$/hlt/socket_networking.py" />
-    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/codecs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="341">
-          <caret line="316" column="0" lean-forward="true" selection-start-line="316" selection-start-column="0" selection-end-line="316" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pipe_socket_translator.py" />
     <entry file="file://$PROJECT_DIR$/hlt/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="187">
@@ -600,21 +676,10 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="51">
           <caret line="3" column="28" lean-forward="false" selection-start-line="3" selection-start-column="4" selection-end-line="3" selection-end-column="28" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/0-2586.log" />
-    <entry file="file://$PROJECT_DIR$/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="33" lean-forward="false" selection-start-line="5" selection-start-column="33" selection-end-line="5" selection-end-column="33" />
-          <folding>
-            <element signature="e#0#32#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/install.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -668,16 +733,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/hlt/networking.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1173">
-          <caret line="73" column="42" lean-forward="false" selection-start-line="73" selection-start-column="27" selection-end-line="73" selection-end-column="42" />
-          <folding>
-            <element signature="e#0#10#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/bot/squad.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
@@ -696,37 +751,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tools/mass_run.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="850">
-          <caret line="56" column="8" lean-forward="false" selection-start-line="56" selection-start-column="8" selection-end-line="56" selection-end-column="8" />
-          <folding>
-            <element signature="e#0#22#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="102">
           <caret line="6" column="37" lean-forward="false" selection-start-line="6" selection-start-column="37" selection-end-line="6" selection-end-column="37" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/hlt/game_map.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2788">
-          <caret line="166" column="17" lean-forward="false" selection-start-line="166" selection-start-column="8" selection-end-line="166" selection-end-column="17" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/hlt/entity.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5712">
-          <caret line="343" column="66" lean-forward="false" selection-start-line="343" selection-start-column="66" selection-end-line="343" selection-end-column="66" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -738,65 +766,197 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bot/navigation.pyx">
+    <entry file="file://$PROJECT_DIR$/tools/mass_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="409">
-          <caret line="201" column="58" lean-forward="false" selection-start-line="201" selection-start-column="58" selection-end-line="201" selection-end-column="58" />
+        <state relative-caret-position="850">
+          <caret line="56" column="82" lean-forward="false" selection-start-line="56" selection-start-column="82" selection-end-line="56" selection-end-column="82" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/MyBot.py">
+    <entry file="file://$PROJECT_DIR$/hlt/entity.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="394">
-          <caret line="34" column="31" lean-forward="false" selection-start-line="34" selection-start-column="31" selection-end-line="34" selection-end-column="31" />
+        <state relative-caret-position="5202">
+          <caret line="313" column="39" lean-forward="false" selection-start-line="313" selection-start-column="39" selection-end-line="313" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bot/drone.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bot/my.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="6" column="1" lean-forward="false" selection-start-line="6" selection-start-column="1" selection-end-line="6" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test_snake.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="19" lean-forward="false" selection-start-line="16" selection-start-column="19" selection-end-line="16" selection-end-column="19" />
           <folding>
-            <element signature="e#0#14#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bot/settings.py">
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python35/Lib/site-packages/skimage/segmentation/active_contour_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="241">
-          <caret line="19" column="0" lean-forward="false" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+        <state relative-caret-position="51">
+          <caret line="8" column="4" lean-forward="false" selection-start-line="8" selection-start-column="4" selection-end-line="8" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hlt/game_map.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-408">
+          <caret line="26" column="21" lean-forward="false" selection-start-line="26" selection-start-column="21" selection-end-line="26" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hlt/networking.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="187">
+          <caret line="74" column="0" lean-forward="false" selection-start-line="73" selection-start-column="0" selection-end-line="74" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/run_game.bat">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="13" column="36" lean-forward="false" selection-start-line="13" selection-start-column="36" selection-end-line="13" selection-end-column="36" />
+        <state relative-caret-position="323">
+          <caret line="19" column="0" lean-forward="false" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bot/monitor.py">
+    <entry file="file://$PROJECT_DIR$/bot/drone.pyx">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="537">
-          <caret line="323" column="17" lean-forward="false" selection-start-line="323" selection-start-column="17" selection-end-line="323" selection-end-column="17" />
+        <state relative-caret-position="442">
+          <caret line="394" column="23" lean-forward="false" selection-start-line="394" selection-start-column="23" selection-end-line="394" selection-end-column="23" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+            <marker date="1515261039157" expanded="true" signature="1685:3183" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="3217:3460" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="3485:3516" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="3570:3630" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="3659:3850" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="3882:4076" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="4102:4271" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="4304:5036" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="5074:5266" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="5337:6759" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="6793:6928" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="6953:7061" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="7092:8051" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="8188:9375" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="9410:10115" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="10171:11177" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="11218:11561" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="11595:11943" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="12003:12618" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="12663:12873" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="12912:12952" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="12996:13408" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="13472:14766" ph="..." />
+            <marker date="1515261039157" expanded="true" signature="14806:15112" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bot/navigation.pyx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="887">
+          <caret line="218" column="35" lean-forward="false" selection-start-line="218" selection-start-column="35" selection-end-line="218" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bot/settings.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="561">
+          <caret line="90" column="23" lean-forward="false" selection-start-line="90" selection-start-column="23" selection-end-line="90" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MyBot.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-102">
+          <caret line="18" column="15" lean-forward="false" selection-start-line="18" selection-start-column="15" selection-end-line="18" selection-end-column="15" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bot/manager.py">
+    <entry file="file://$PROJECT_DIR$/bot/influence.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="554">
-          <caret line="670" column="47" lean-forward="false" selection-start-line="670" selection-start-column="47" selection-end-line="670" selection-end-column="47" />
+        <state relative-caret-position="255">
+          <caret line="73" column="22" lean-forward="false" selection-start-line="73" selection-start-column="22" selection-end-line="73" selection-end-column="22" />
           <folding>
-            <element signature="e#17#31#0" expanded="true" />
+            <element signature="e#0#110#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bot/drone.py">
+    <entry file="file://$PROJECT_DIR$/bot/monitor.pyx">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="334">
-          <caret line="381" column="58" lean-forward="true" selection-start-line="381" selection-start-column="58" selection-end-line="381" selection-end-column="58" />
-          <folding />
+        <state relative-caret-position="357">
+          <caret line="539" column="28" lean-forward="false" selection-start-line="539" selection-start-column="8" selection-end-line="539" selection-end-column="28" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+            <marker date="1515266440057" expanded="true" signature="1804:1907" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="1957:4303" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="4346:5126" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="5175:6327" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="6378:6420" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="6469:6509" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="6569:7171" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="7225:7616" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="7815:8413" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="8463:8614" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="8852:9116" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="9163:9324" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="9371:9499" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="9554:9673" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="9807:9952" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="9998:10202" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="10255:10793" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="10844:11371" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="11431:11802" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="11846:13093" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="13138:16238" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="16292:16492" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="16555:16616" ph="..." />
+            <marker date="1515266440057" expanded="true" signature="16799:20780" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bot/manager.pyx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="362">
+          <caret line="334" column="0" lean-forward="false" selection-start-line="334" selection-start-column="0" selection-end-line="334" selection-end-column="0" />
+          <folding>
+            <element signature="e#17#31#0" expanded="true" />
+            <marker date="1515266573905" expanded="true" signature="19890:19892" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>

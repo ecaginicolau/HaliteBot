@@ -4,7 +4,7 @@ from enum import Enum
 
 from bot.monitor import Monitor
 from bot.navigation import calculate_distance_between
-from bot.settings import MAX_TURN_DEFENDER, THREAT_WEIGHT, DISTANCE_WEIGHT
+from bot.settings import MAX_TURN_DEFENDER, THREAT_WEIGHT, DISTANCE_WEIGHT, SCORE_NB_DOCKING_SPOTS, SCORE_NB_SHIP_ONGOING, SCORE_DISTANCE_CENTER
 from hlt import constants
 from hlt.entity import Ship
 
@@ -373,7 +373,7 @@ class Drone(object):
                 list_distance.append((distance, planet))
         return list_distance
 
-    def get_free_planet_by_score(self):
+    def get_free_planet_by_score(self, dic_nb_available_spot):
         """
         return the list of planet (empty or owned) and not full by distance
         :return: list of free planet by distance
@@ -382,7 +382,17 @@ class Drone(object):
         for distance, planet in self.__planet_by_distance:
             # Make sure the planet is free
             if planet.is_free(self.ship.owner):
-                score = distance / planet.nb_available_docking_spots()
+                # Don't look for planet with no available spot anymore
+                if dic_nb_available_spot[planet.id] == 0:
+                    continue
+                # Score is relative to the distance
+                score = distance
+                # The score decrease with he number of availbale docking spots in the planet
+                score /= planet.nb_available_docking_spots() * SCORE_NB_DOCKING_SPOTS
+                # the Score decrease with the number of ship already going to the planet
+                score /= (planet.nb_available_docking_spots() - dic_nb_available_spot[planet.id] + 1) * SCORE_NB_SHIP_ONGOING
+                # the score decrease with the distance of the planet to the center
+                score -= calculate_distance_between(planet.pos, Monitor.get_map_center()) * SCORE_DISTANCE_CENTER
                 list_score.append((score, planet))
         list_score = sorted(list_score, key=lambda l: l[0])
         return list_score

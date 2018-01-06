@@ -1,10 +1,9 @@
 import logging
-from copy import copy
-
-from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT, THREAT_BY_TURN_RATIO, DEFENSE_FORWARD, DEFENSE_POINT_RADIUS, \
+from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT, THREAT_BY_TURN_RATIO, DEFENSE_POINT_RADIUS, \
     INITIAL_SAFE_DISTANCE, MIN_SHIP_ATTACKERS
 from bot.navigation import Circle, calculate_distance_between, calculate_direction, calculate_angle_vector, calculate_length
 from hlt.entity import Ship, Position
+from .influence import Influence
 
 logger = logging.getLogger("monitor")
 
@@ -43,6 +42,8 @@ class Monitor(object):
     __all_ships_old_position = {}
     # Store the gravitational center of every team
     __gravitational_center = {}
+    # Game turn number
+    turn = 0
 
     @staticmethod
     def init(player_id):
@@ -59,7 +60,8 @@ class Monitor(object):
         """
         # Update the game_map
         Monitor.game_map = game_map
-
+        # Update the turn number
+        Monitor.turn = game_map.turn
         # Reset turn's variable
         # Reset the nemesis
         Monitor.__nemesis = None
@@ -104,6 +106,9 @@ class Monitor(object):
         # Calculate velocity of all ship
         Monitor.calculate_velocity()
 
+        # Reset the defense point
+        Monitor.__defense_points = None
+
     @staticmethod
     def initial_turn():
         global MIN_SHIP_ATTACKERS
@@ -123,7 +128,6 @@ class Monitor(object):
             MIN_SHIP_ATTACKERS = 1
         else:
             MIN_SHIP_ATTACKERS = 0
-
 
     @staticmethod
     def calculate_velocity():
@@ -171,7 +175,7 @@ class Monitor(object):
             total_list = []
             for enemy_id, list_ship in Monitor.__ship_by_player.keys():
                 # Don't get our ships
-                if enemy_id == Monitor.player_id:
+                if enemy_id != Monitor.player_id:
                     total_list.extend(list_ship)
             return total_list
 
@@ -187,6 +191,11 @@ class Monitor(object):
                 return True
 
         return False
+
+    @staticmethod
+    def get_map_center():
+        center = Circle(Monitor.game_map.width / 2.0, Monitor.game_map.height / 2.0)
+        return center
 
     @staticmethod
     def get_free_planets():
@@ -214,6 +223,14 @@ class Monitor(object):
         :return:
         """
         return Monitor.__all_planets_dict[planet_id]
+
+    @staticmethod
+    def get_empty_planets():
+        return Monitor.__empty_planets
+
+    @staticmethod
+    def get_planets_by_player():
+        return Monitor.__planets_by_player
 
     @staticmethod
     def get_empty_planet(planet_id):
@@ -247,7 +264,11 @@ class Monitor(object):
             return len(Monitor.__ship_by_player[player_id])
         except KeyError:
             return 0
-        player_id
+
+    @staticmethod
+    def get_ship_by_player():
+        return Monitor.__ship_by_player
+
     @staticmethod
     def get_team_ships():
         """
@@ -312,7 +333,6 @@ class Monitor(object):
         :param player_id:
         :return: x  & y of the gratitional center
         """
-        logging.debug(Monitor.__gravitational_center)
         return Monitor.__gravitational_center[player_id]
 
     @staticmethod
@@ -322,25 +342,26 @@ class Monitor(object):
         near our center of gravity, toward enemies center of gravity
         :return:
         """
-        our_center = Monitor.gravitational_center(Monitor.player_id)
-        enemy_center = Circle.zero()
-        # Loop through all enemy player id
-        nb_ships_enemies = 0
-        for player_id in Monitor.__ship_by_player.keys():
-            # If it's not our team
-            if player_id != Monitor.player_id:
-                enemy_center += Monitor.gravitational_center(player_id)
-                nb_ships_enemies += Monitor.nb_ships_player(player_id)
-        enemy_center /= len(Monitor.__ship_by_player) - 1
+        if Monitor.__defense_points is None:
+            our_center = Monitor.gravitational_center(Monitor.player_id)
+            enemy_center = Circle.zero()
+            # Loop through all enemy player id
+            nb_ships_enemies = 0
+            for player_id in Monitor.__ship_by_player.keys():
+                # If it's not our team
+                if player_id != Monitor.player_id:
+                    enemy_center += Monitor.gravitational_center(player_id)
+                    nb_ships_enemies += Monitor.nb_ships_player(player_id)
+            enemy_center /= len(Monitor.__ship_by_player) - 1
 
-        direction = enemy_center - our_center
-        ratio = (nb_ships_enemies * 2) / float(nb_ships_enemies * 2 + Monitor.nb_ships_player(player_id))
-        direction = direction / (calculate_length(direction) * ratio)
-        defense = our_center + direction
-        logging.debug("Defense points: %s, Our center: %s, Enemy center: %s" % (defense,our_center, enemy_center))
-        # Make it a position
-        defense = Position(defense.x, defense.y, DEFENSE_POINT_RADIUS)
-        return defense
+            direction = enemy_center - our_center
+            ratio = nb_ships_enemies / float(nb_ships_enemies + Monitor.nb_ships_player(Monitor.player_id))
+            #ratio = 0.5
+            direction = direction / (calculate_length(direction) * ratio)
+            defense = our_center + direction
+            # Make it a position
+            Monitor.__defense_points = Position(defense.x, defense.y, DEFENSE_POINT_RADIUS)
+        return Monitor.__defense_points
 
 
 
@@ -388,7 +409,6 @@ class Monitor(object):
 
         # Loop through all enemies
         for enemy_id in Monitor.__ship_by_player.keys():
-            logging.debug("calculating score of: %s" % enemy_id)
             # This is not an enemy, it's ourself
             if enemy_id == Monitor.player_id:
                 # Skip to next player
@@ -410,7 +430,6 @@ class Monitor(object):
             # Calculate the score
             score = SHIP_WEIGHT * nb_ship + PLANET_WEIGHT * nb_planet + PROXIMITY_WEIGHT * distance
             enemy_score[enemy_id] = score
-            logger.info("Score of the player_id %s is %s" % (enemy_id, score))
 
         # Find the nemesis : the enemy with the biggest score
         max_score = -9999
@@ -421,7 +440,6 @@ class Monitor(object):
                 nemesis = enemy_id
 
         Monitor.__nemesis = nemesis
-        logging.debug("Found a nemesis: %s" % nemesis)
         return Monitor.__nemesis
 
     @staticmethod
@@ -429,14 +447,16 @@ class Monitor(object):
         try:
             return Monitor.__threat_level[ship_id]
         except KeyError:
-            return NO_THREAT / 2
+            Monitor.__threat_level[ship_id] = NO_THREAT / 2
+            return Monitor.__threat_level[ship_id]
 
     @staticmethod
-    def update_threat(ship_id, angle):
-        old_threat = Monitor.get_threat_level(ship_id)
-        logger.debug("old threat: %s" % old_threat)
-        Monitor.__threat_level[ship_id] = old_threat - (90 + angle) * THREAT_BY_TURN_RATIO
-        logger.debug("new threat: %s" % Monitor.__threat_level[ship_id])
+    def update_threat(ship_id, new_threat):
+        try:
+            Monitor.__threat_level[ship_id] -= new_threat
+        except:
+            Monitor.get_threat_level(ship_id)
+            Monitor.__threat_level[ship_id] -= new_threat
 
     @staticmethod
     def calculate_threat_level():
@@ -464,6 +484,17 @@ class Monitor(object):
             if enemy_id != Monitor.player_id:
                 for ship_id in list_ship:
                     ship = Monitor.__all_ships_dict[ship_id]
+                    """
+                    # 2 parts threat calculation: 
+                        - Is the enemy ship in our influence zone.
+                        - Is the enemy ship going in our direction
+                    """
+
+                    # Part 1: Is the enemy ship in our influence zone.
+                    logging.debug("Influence of ship %s: %s" % (ship_id,Influence.get_point_influence(ship.pos)))
+                    Monitor.update_threat(ship_id, Influence.get_point_influence(ship.pos))
+
+                    # Part 2: Is the enemy ship going in our direction
                     # Easy : docked = no threat
                     if ship.docking_status != Ship.DockingStatus.UNDOCKED:
                         Monitor.__threat_level[ship.id] = NO_THREAT
@@ -495,12 +526,35 @@ class Monitor(object):
                             possible_target = other_ship
 
                     # Update the threat of that ship, the smallest the angle the more the threat increase (threat value decrease)
-                    logging.debug("Update threat of ship_id: %s with angle: %s" % (ship_id, smallest_angle))
-                    Monitor.update_threat(ship_id, smallest_angle)
+                    angle_threat = (90 - smallest_angle) * THREAT_BY_TURN_RATIO
+                    Monitor.update_threat(ship_id, angle_threat)
 
                     if (possible_target is not None) and (smallest_angle < MIN_ANGLE_TARGET) and (possible_target.owner.id == Monitor.player_id):
                         # The threat is an estimation of the number it would take to the ship to arrives
                         distance = calculate_distance_between(ship.pos, possible_target.pos)
                         Monitor.__threat_level[ship.id] = distance
-                        logger.info("Found a possible target for ship: %s it's: ship %s" % (ship.id, possible_target.id))
                         Manager.add_possible_threat(possible_target.id, distance, ship.id)
+
+
+    @staticmethod
+    def nb_ship_in_influence():
+        """
+        Return the number of enemy ships inside our influence zone
+        :return: int
+        """
+        # Cache mecanism to avoid counting each time
+        if Monitor.nb_in_influence is None:
+            Monitor.nb_in_influence = 0
+            # loop through all enemy ship
+            for enemy_id, list_ship in Monitor.__ship_by_player.items():
+                # Don't check our own ships
+                if enemy_id != Monitor.player_id:
+                    # Loop through all ships
+                    for ship_id in list_ship:
+                        # Get the ship
+                        ship = Monitor.__all_ships_dict[ship_id]
+                        # Check if the ship is in the influence zone
+                        if Influence.is_in_influence_zone(ship.pos):
+                            Monitor.nb_in_influence += 1
+        # Return the number of ship in our influence zone
+        return Monitor.nb_in_influence
