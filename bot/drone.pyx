@@ -246,6 +246,31 @@ class Drone(object):
     # Create the properties
     role = property(get_role, set_role)
 
+    def get_furthest_ship(self, player_id=None, docked_only=False):
+        """
+        Return the closest ship, if a player_id is sent then return the closest ship of this player
+        :param player_id: the player 's ship we are looking for, None for all ships
+        :param docked_only: Only look for docked ships
+        :return: a single ship
+        """
+        for distance, enemy_ship in reversed(self.__enemy_by_distance):
+            # If we are looking for docked only ships
+            if docked_only:
+                # If the enemy ship is currently undocked, skip to next ship
+                if enemy_ship.docking_status == Ship.DockingStatus.UNDOCKED:
+                    # Skip to next ship
+                    continue
+            # If we are looking for a specific enemy's ships
+            if player_id is not None:
+                # Check if the ship's owner match the enemy we are looking after
+                if player_id != enemy_ship.owner.id:
+                    # SKip to next ship if the owners doesn't match
+                    continue
+            # If we've made up to here it means we have found the correct ship!
+            return distance, enemy_ship
+        # There are no ships matching this filter
+        return None, None
+
     def get_closest_ship(self, player_id=None, docked_only=False):
         """
         Return the closest ship, if a player_id is sent then return the closest ship of this player
@@ -387,12 +412,14 @@ class Drone(object):
                     continue
                 # Score is relative to the distance
                 score = distance
+                """
                 # The score decrease with he number of availbale docking spots in the planet
                 score /= planet.nb_available_docking_spots() * SCORE_NB_DOCKING_SPOTS
                 # the Score decrease with the number of ship already going to the planet
                 score /= (planet.nb_available_docking_spots() - dic_nb_available_spot[planet.id] + 1) * SCORE_NB_SHIP_ONGOING
                 # the score decrease with the distance of the planet to the center
                 score -= calculate_distance_between(planet.pos, Monitor.get_map_center()) * SCORE_DISTANCE_CENTER
+                """
                 list_score.append((score, planet))
         list_score = sorted(list_score, key=lambda l: l[0])
         return list_score

@@ -8,7 +8,7 @@ from bot.navigation import calculate_distance_between
 from bot.influence import Influence
 from bot.settings import MIN_SHIP_ATTACKERS, MAX_RATIO_SHIP_ATTACKERS, NB_SHIP_THRESHOLD, \
     MAX_TURN_DURATION, MINER_CAN_DEFEND, MINER_DEFENDER_RADIUS, SAFE_ZONE_RADIUS, MIN_SCORE_DEFENSE, FOLLOW_DISTANCE, EARLY_RATIO_ASSASSIN, EARLY_RATIO_ATTACKER, \
-    EARLY_RATIO_DEFENDER, LATE_RATIO_DEFENDER, LATE_RATIO_ATTACKER, LATE_RATIO_ASSASSIN
+    EARLY_RATIO_DEFENDER, LATE_RATIO_DEFENDER, LATE_RATIO_ATTACKER, LATE_RATIO_ASSASSIN, DEFENDER_RADIUS, NB_TURN_INFLUENCE, NB_IN_INFLUENCE_RATIO
 # hlt imports
 from hlt.constants import *
 from hlt.entity import Ship, Position
@@ -325,15 +325,51 @@ class Manager(object):
         :return:
         """
         Manager.role_status()
-        # If there are Idle drones
-        if Manager.nb_drone_role(DroneRole.IDLE) > 0:
-            # Affect all remaining idle to conqueror role
-            # Copy the list of ship_id for modification
+        """
+        # 1st: There are still planets to conquer
+        """
+        if Monitor.map_has_available_spots():
+            # While there are still some idle drone, and we have less attackers than ships attacking us
+            while Manager.nb_drone_role(DroneRole.IDLE) > 0 and Manager.nb_offense() < Monitor.nb_ship_in_influence_last_X(NB_TURN_INFLUENCE) * NB_IN_INFLUENCE_RATIO:
+                # Change an IDLE Drone to attacker
+                # Look for the idle drone that is the closest to an enemy
+                min_distance = 999
+                selected_drone = None
+                for ship_id in Manager.__all_role_drones[DroneRole.IDLE]:
+                    drone = Manager.__all_drones[ship_id]
+                    distance, target = drone.get_closest_ship()
+                    if distance < min_distance:
+                        selected_drone = drone
+                        min_distance = distance
+                # Now work with the drone that is the closest to an enemy
+                # Get the next offensive role to assign
+                role = Manager.get_next_offensive_role()
+                # Assign the role to the drone
+                Manager.change_drone_role(selected_drone, role)
+
+            # If there are Idle drones
+            if Manager.nb_drone_role(DroneRole.IDLE) > 0:
+                # Affect all remaining idle to conqueror role
+                # Copy the list of ship_id for modification
+                list_ship_id = list(Manager.__all_role_drones[DroneRole.IDLE])
+                for ship_id in list_ship_id:
+                    drone = Manager.__all_drones[ship_id]
+                    # Assign the role
+                    Manager.change_drone_role(drone, DroneRole.CONQUEROR)
+
+        else:
+            """
+            # 2nd:  There are no planets to conquer anymore
+            """
             list_ship_id = list(Manager.__all_role_drones[DroneRole.IDLE])
             for ship_id in list_ship_id:
                 drone = Manager.__all_drones[ship_id]
+                # Get the next offensive role
+                role = Manager.get_next_offensive_role()
                 # Assign the role
-                Manager.change_drone_role(drone, DroneRole.CONQUEROR)
+                Manager.change_drone_role(drone, role)
+
+
         Manager.role_status()
 
     @staticmethod
@@ -452,7 +488,7 @@ class Manager(object):
         :param ship:
         :return: the navigate command
         """
-        logging.debug("Going to generate a navigate command between ship %s and target %s" % (ship.id, target.id))
+        # logging.debug("Going to generate a navigate command between ship %s and target %s" % (ship.id, target.id))
 
         navigate_command = None
         if target is not None:
@@ -467,7 +503,7 @@ class Manager(object):
                 assassin=assassin,
                 closest=closest,
             )
-            logging.info("Navigation command: %s" % navigate_command)
+            # logging.info("Navigation command: %s" % navigate_command)
 
         return navigate_command
 
@@ -507,6 +543,17 @@ class Manager(object):
         return Manager.__navigate_target(ship, target)
 
     @staticmethod
+    def check_drone_surrounding(drone):
+        # Check if enemies are in the radius of defense
+        # Get the distance of the closest enemy ship
+        distance, ship = drone.get_closest_ship()
+        if distance <= DEFENDER_RADIUS:
+            # Change drone role to DEFENDER
+            Manager.change_drone_role(drone, DroneRole.DEFENDER)
+            return True
+        return False
+
+    @staticmethod
     def check_drone_defense(drone):
         """
         Check if there is an enemy inside the defender radius of a drone, make it a defender if so
@@ -521,7 +568,7 @@ class Manager(object):
         # Check if enemies are in the radius of defense
         # Get the distance of the closest enemy ship
         distance, ship = drone.get_closest_ship()
-        if distance <= MINER_DEFENDER_RADIUS:
+        if distance <= DEFENDER_RADIUS:
             # Change drone role to DEFENDER
             Manager.change_drone_role(drone, DroneRole.DEFENDER)
             return True
@@ -547,20 +594,20 @@ class Manager(object):
         for ship_id in Manager.__all_role_drones[DroneRole.ASSASSIN]:
             # Get the drone
             drone = Manager.__all_drones[ship_id]
-
-            # Look for the closest ship of our nemesis that is docked
-            distance, enemy_ship = drone.get_closest_ship(player_id=nemesis, docked_only=True)
-            #If we've found a docked ship
-            if enemy_ship is not None:
-                drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
-            # If there are no docked ship
-            else:
-                # move to the gravititional center of our nemesis
-                center = Monitor.gravitational_center(nemesis)
-                position = Position(center.x, center.y, center.radius)
-                distance = calculate_distance_between(drone.ship.pos, position.pos)
-                # Assign the target
-                drone.assign_target(position, distance, target_type=TargetType.POSITION)
+            if drone.target is None:
+                # Look for the closest ship of our nemesis that is docked
+                distance, enemy_ship = drone.get_furthest_ship(player_id=nemesis, docked_only=True)
+                #If we've found a docked ship
+                if enemy_ship is not None:
+                    drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+                # If there are no docked ship
+                else:
+                    # move to the gravitational center of our nemesis
+                    center = Monitor.gravitational_center(nemesis)
+                    position = Position(center.x, center.y, center.radius)
+                    distance = calculate_distance_between(drone.ship.pos, position.pos)
+                    # Assign the target
+                    drone.assign_target(position, distance, target_type=TargetType.POSITION)
 
     @staticmethod
     def order_attacker():
@@ -585,12 +632,14 @@ class Manager(object):
             # if drone.target is None:
             # Look for the closest ship of our nemesis
             distance, enemy_ship = drone.get_closest_ship(player_id=nemesis)
+            """
             # If no enemy in immediate threat of this ship, make it become a conqueror
             if distance > SAFE_ZONE_RADIUS:
                 Manager.change_drone_role(drone, DroneRole.DEFENDER)
             else:
-                # Assign the new target, if any available
-                drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+            """
+            # Assign the new target, if any available
+            drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
 
     @staticmethod
     def order_miner():
@@ -644,11 +693,16 @@ class Manager(object):
             # Get the drone
             drone = Manager.__all_drones[ship_id]
 
+            """
             # Check if enemies are in the radius of defense
             became_defender = Manager.check_drone_defense(drone)
             if became_defender:
                 # This conqueror became a defender, so don't continue for this drone
                 # Skip to next drone
+                continue
+            """
+            became_attacker = Manager.check_drone_surrounding(drone)
+            if became_attacker:
                 continue
 
             # Check if the drone has a valid target, skip it if so

@@ -4,6 +4,8 @@ from collections import defaultdict
 import os
 import logging
 
+from hlt.entity import Ship
+
 
 class Influence(object):
 
@@ -54,8 +56,9 @@ class Influence(object):
         """
         # Get the influence zone of every ships
         for ship in game_map.get_me().all_ships():
-            # Draw a circle for every ship
-            Influence.add_circle_position(ship, SHIP_INFLUENCE, empty_planet=False)
+            # Draw a circle for every ship that is docked
+            if ship.docking_status != Ship.DockingStatus.UNDOCKED:
+                Influence.add_circle_position(ship, SHIP_INFLUENCE, empty_planet=False)
 
         # Get the influence zone of every planets
         for planet in game_map.all_planets():
@@ -68,8 +71,11 @@ class Influence(object):
             for circle in Influence.__circle_to_draw_dict[color]:
                 draw.ellipse(circle, fill=color, outline=color)
 
-        if os.environ['RAMPA_LOG_LEVEL'] == "DEBUG":
-            Influence.img.save("influence\\influence_%s.png" % Influence.turn)
+        try:
+            if os.environ['RAMPA_LOG_LEVEL'] == "DEBUG":
+                Influence.img.save("influence\\influence_%s.png" % Influence.turn)
+        except KeyError:
+            pass
 
         Influence.turn += 1
 
@@ -81,6 +87,7 @@ class Influence(object):
         :return: and int between 0 and 255
         """
         return Influence.img.getpixel((pos.x, pos.y))
+        # return Influence.img.getpixel((int(pos.x), int(pos.y)))
 
     @staticmethod
     def is_in_influence_zone(pos):

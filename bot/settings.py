@@ -48,13 +48,13 @@ MIN_SHIP_ATTACKERS = 0
 # Even if there are still some available planet, send a portion of the ship to attack
 MAX_RATIO_SHIP_ATTACKERS = 0.10
 # ratio of offensive ship at the start of the game (before the game is full)
-EARLY_RATIO_ATTACKER = 0.6
-EARLY_RATIO_ASSASSIN = 0.4
+EARLY_RATIO_ATTACKER = 0.9
+EARLY_RATIO_ASSASSIN = 0.1
 EARLY_RATIO_DEFENDER = 0.0
 # ratio of offensive ship at the end of the game (after the game is full)
-LATE_RATIO_ATTACKER = 0.4
-LATE_RATIO_ASSASSIN = 0.2
-LATE_RATIO_DEFENDER = 0.4
+LATE_RATIO_ATTACKER = 1.0
+LATE_RATIO_ASSASSIN = 0.0
+LATE_RATIO_DEFENDER = 0.0
 
 """
 # Drone parameters
@@ -74,7 +74,7 @@ SCORE_DISTANCE_CENTER = 0.5
 # Navigation parameters
 """
 # The radius the assassin tries to avoid enemy ship, 7+? 14+?
-ASSASSIN_AVOID_RADIUS = 25
+ASSASSIN_AVOID_RADIUS = 7
 
 """
 # Influence parameters
@@ -89,3 +89,7 @@ INFLUENCE_ZONE = 32
 INFLUENCE_STEP = 5
 # Threshold after which the point is considered inside the influence zone
 INFLUENCE_THRESHOLD = 0
+# Nb turn in history we look for the max nb of ship in our influence
+NB_TURN_INFLUENCE = 5
+# Nb enemy ratio
+NB_IN_INFLUENCE_RATIO = 0.8

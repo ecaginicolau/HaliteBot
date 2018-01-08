@@ -44,6 +44,10 @@ class Monitor(object):
     __gravitational_center = {}
     # Game turn number
     turn = 0
+    # Store the number of enemy ships inside our influence zone
+    __nb_in_influence = None
+    # History nb ship in influence
+    __history_nb_in_influence = []
 
     @staticmethod
     def init(player_id):
@@ -108,6 +112,9 @@ class Monitor(object):
 
         # Reset the defense point
         Monitor.__defense_points = None
+
+        # Reset influence value
+        Monitor.__nb_in_influence = None
 
     @staticmethod
     def initial_turn():
@@ -491,7 +498,7 @@ class Monitor(object):
                     """
 
                     # Part 1: Is the enemy ship in our influence zone.
-                    logging.debug("Influence of ship %s: %s" % (ship_id,Influence.get_point_influence(ship.pos)))
+                    # logging.debug("Influence of ship %s: %s" % (ship_id,Influence.get_point_influence(ship.pos)))
                     Monitor.update_threat(ship_id, Influence.get_point_influence(ship.pos))
 
                     # Part 2: Is the enemy ship going in our direction
@@ -535,6 +542,20 @@ class Monitor(object):
                         Monitor.__threat_level[ship.id] = distance
                         Manager.add_possible_threat(possible_target.id, distance, ship.id)
 
+    @staticmethod
+    def nb_ship_in_influence_last_X(nb_turn):
+        """
+        Return the number of enemy ships inside our influence zone
+        :return: int
+        """
+        Monitor.nb_ship_in_influence()
+        try:
+            nb = int(max(Monitor.__history_nb_in_influence[-nb_turn:]))
+            logging.debug("nb_ship_in_influence_last_X: %s" % nb)
+            return nb
+        except:
+            return 0
+
 
     @staticmethod
     def nb_ship_in_influence():
@@ -542,9 +563,9 @@ class Monitor(object):
         Return the number of enemy ships inside our influence zone
         :return: int
         """
-        # Cache mecanism to avoid counting each time
-        if Monitor.nb_in_influence is None:
-            Monitor.nb_in_influence = 0
+        # Cache mechanism to avoid counting each time
+        if Monitor.__nb_in_influence is None:
+            Monitor.__nb_in_influence = 0
             # loop through all enemy ship
             for enemy_id, list_ship in Monitor.__ship_by_player.items():
                 # Don't check our own ships
@@ -553,8 +574,11 @@ class Monitor(object):
                     for ship_id in list_ship:
                         # Get the ship
                         ship = Monitor.__all_ships_dict[ship_id]
-                        # Check if the ship is in the influence zone
-                        if Influence.is_in_influence_zone(ship.pos):
-                            Monitor.nb_in_influence += 1
+                        # Only count undocked ship
+                        if not ship.docking_status == Ship.DockingStatus.UNDOCKED:
+                            # Check if the ship is in the influence zone
+                            if Influence.is_in_influence_zone(ship.pos):
+                                Monitor.__nb_in_influence += 1
+            Monitor.__history_nb_in_influence.append(Monitor.__nb_in_influence)
         # Return the number of ship in our influence zone
-        return Monitor.nb_in_influence
+        return Monitor.__nb_in_influence
