@@ -5,7 +5,7 @@ from pprint import pprint
 def list_challenge(userid):
     url ="https://api.halite.io/v1/api/user/%s/challenge" % userid
     response = urllib.request.urlopen(url)
-    data = json.loads(response.read())
+    data = json.loads(response.read().decode('utf-8'))
     #pprint(data)
     return data
 
@@ -17,7 +17,7 @@ def stat_challenge(userid, challenge):
             adversary=stat["username"]
     url = "https://api.halite.io/v1/api/user/%s/challenge/%s/match" % (userid, challenge["challenge_id"])
     response = urllib.request.urlopen(url)
-    data = json.loads(response.read())
+    data = json.loads(response.read().decode('utf-8'))
     #pprint(data)
     wins = 0
     nb = 0

@@ -72,6 +72,8 @@ class Manager(object):
         Influence.update_game_map(game_map)
         # Check for new threat
         Monitor.calculate_threat_level()
+        # Calculate the number of ship in the influence zone everyturn
+        Monitor.nb_ship_in_influence()
 
     # Return the role of a single ship
     @staticmethod
@@ -270,44 +272,46 @@ class Manager(object):
         :return:
         """
         if Monitor.map_has_available_spots():
+            """
             # By default our first offensive drone is an assassin
             if Manager.nb_drone_role(DroneRole.ASSASSIN) == 0:
                 return DroneRole.ASSASSIN
-
-            # Make sure there are enough assassins
-            ratio_assassin = Manager.nb_drone_role(DroneRole.ASSASSIN) / float(Manager.nb_offense())
-            if ratio_assassin < EARLY_RATIO_ASSASSIN:
-                return DroneRole.ASSASSIN
-
+            """
             # Make sure there are enough attackers
-            ratio_attacker = Manager.nb_drone_role(DroneRole.ATTACKER) / float(Manager.nb_offense())
+            ratio_attacker = Manager.nb_drone_role(DroneRole.ATTACKER) / float(Manager.nb_offense() + 1)
             if ratio_attacker < EARLY_RATIO_ATTACKER:
                 return DroneRole.ATTACKER
 
+            # Make sure there are enough assassins
+            ratio_assassin = Manager.nb_drone_role(DroneRole.ASSASSIN) / float(Manager.nb_offense() + 1)
+            if ratio_assassin < EARLY_RATIO_ASSASSIN:
+                return DroneRole.ASSASSIN
+
             # Make sure there are enough defenders
-            ratio_defender = Manager.nb_drone_role(DroneRole.DEFENDER) / float(Manager.nb_offense())
+            ratio_defender = Manager.nb_drone_role(DroneRole.DEFENDER) / float(Manager.nb_offense() + 1)
             if ratio_defender < EARLY_RATIO_DEFENDER:
                 return DroneRole.DEFENDER
 
             # Should not happen, but in doubt create an attacker
             return DroneRole.ATTACKER
         else:
+            """
             # By default our first offensive drone is an assassin
             if Manager.nb_drone_role(DroneRole.ASSASSIN) == 0:
                 return DroneRole.ASSASSIN
-
-            # Make sure there are enough assassins
-            ratio_assassin = Manager.nb_drone_role(DroneRole.ASSASSIN) / float(Manager.nb_offense())
-            if ratio_assassin < LATE_RATIO_ASSASSIN:
-                return DroneRole.ASSASSIN
-
+            """
             # Make sure there are enough attackers
-            ratio_attacker = Manager.nb_drone_role(DroneRole.ATTACKER) / float(Manager.nb_offense())
+            ratio_attacker = Manager.nb_drone_role(DroneRole.ATTACKER) / float(Manager.nb_offense() + 1)
             if ratio_attacker < LATE_RATIO_ATTACKER:
                 return DroneRole.ATTACKER
 
+            # Make sure there are enough assassins
+            ratio_assassin = Manager.nb_drone_role(DroneRole.ASSASSIN) / float(Manager.nb_offense() + 1)
+            if ratio_assassin < LATE_RATIO_ASSASSIN:
+                return DroneRole.ASSASSIN
+
             # Make sure there are enough defenders
-            ratio_defender = Manager.nb_drone_role(DroneRole.DEFENDER) / float(Manager.nb_offense())
+            ratio_defender = Manager.nb_drone_role(DroneRole.DEFENDER) / float(Manager.nb_offense() + 1)
             if ratio_defender < LATE_RATIO_DEFENDER:
                 return DroneRole.DEFENDER
 
@@ -549,7 +553,7 @@ class Manager(object):
         distance, ship = drone.get_closest_ship()
         if distance <= DEFENDER_RADIUS:
             # Change drone role to DEFENDER
-            Manager.change_drone_role(drone, DroneRole.DEFENDER)
+            Manager.change_drone_role(drone, DroneRole.ATTACKER)
             return True
         return False
 
@@ -631,15 +635,28 @@ class Manager(object):
             # If the drone has currently no target, look for one
             # if drone.target is None:
             # Look for the closest ship of our nemesis
-            distance, enemy_ship = drone.get_closest_ship(player_id=nemesis)
-            """
-            # If no enemy in immediate threat of this ship, make it become a conqueror
-            if distance > SAFE_ZONE_RADIUS:
-                Manager.change_drone_role(drone, DroneRole.DEFENDER)
+            #distance, enemy_ship = drone.get_closest_ship(player_id=nemesis)
+            distance, enemy_ship = drone.get_closest_ship()
+            # Check if there is an enemy around the ship
+            if distance <= SAFE_ZONE_RADIUS:
+                # Attack this ship
+                drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
             else:
-            """
-            # Assign the new target, if any available
-            drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+                # If there are no enemy close, look for an enemy inside the influence zone
+                influence_distance, influence_enemy_ship = drone.get_closest_ship_in_influence()
+                if influence_enemy_ship is not None:
+                    # Assign the new target, if any available
+                    drone.assign_target(influence_enemy_ship, influence_distance, target_type=TargetType.SHIP)
+                else:
+                    # Check if there is still some work for conquerors
+                    if Monitor.map_has_available_spots():
+                        # Convert to conqueror if there are still available spot
+                        Manager.change_drone_role(drone, DroneRole.CONQUEROR)
+                    else:
+                        # Attack the closest ship if there are no spot available
+                        drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+
+
 
     @staticmethod
     def order_miner():

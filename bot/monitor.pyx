@@ -575,10 +575,11 @@ class Monitor(object):
                         # Get the ship
                         ship = Monitor.__all_ships_dict[ship_id]
                         # Only count undocked ship
-                        if not ship.docking_status == Ship.DockingStatus.UNDOCKED:
+                        if ship.docking_status == Ship.DockingStatus.UNDOCKED:
                             # Check if the ship is in the influence zone
                             if Influence.is_in_influence_zone(ship.pos):
                                 Monitor.__nb_in_influence += 1
             Monitor.__history_nb_in_influence.append(Monitor.__nb_in_influence)
         # Return the number of ship in our influence zone
+        logging.debug("nb_ship_in_influence: %s" % Monitor.__nb_in_influence)
         return Monitor.__nb_in_influence

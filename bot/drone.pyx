@@ -2,6 +2,7 @@ import hlt
 import logging
 from enum import Enum
 
+from bot.influence import Influence
 from bot.monitor import Monitor
 from bot.navigation import calculate_distance_between
 from bot.settings import MAX_TURN_DEFENDER, THREAT_WEIGHT, DISTANCE_WEIGHT, SCORE_NB_DOCKING_SPOTS, SCORE_NB_SHIP_ONGOING, SCORE_DISTANCE_CENTER
@@ -293,6 +294,21 @@ class Drone(object):
                     continue
             # If we've made up to here it means we have found the correct ship!
             return distance, enemy_ship
+        # There are no ships matching this filter
+        return None, None
+
+    def get_closest_ship_in_influence(self):
+        """
+        Return the closest ship, if a player_id is sent then return the closest ship of this player
+        :param player_id: the player 's ship we are looking for, None for all ships
+        :param docked_only: Only look for docked ships
+        :return: a single ship
+        """
+        for distance, enemy_ship in self.__enemy_by_distance:
+            # Check if the ship is in the influence zone
+            if Influence.is_in_influence_zone(enemy_ship.pos):
+                # If we've made up to here it means we have found the correct ship!
+                return distance, enemy_ship
         # There are no ships matching this filter
         return None, None
 

@@ -35,7 +35,7 @@ NB_SHIP_THRESHOLD = 100
 # Should a miner stop miner to become a defender
 MINER_CAN_DEFEND = False
 # If no enemy in this radius of an attack, convert it to a conqueror
-SAFE_ZONE_RADIUS = 70  # 10 turns?
+SAFE_ZONE_RADIUS = 50  # 10 turns?
 # If we can't find a path to the target look for a path in an intermediate position
 INTERMEDIATE_RATIO = 0.5
 # Minimum score to trigger a defensive move
@@ -48,8 +48,8 @@ MIN_SHIP_ATTACKERS = 0
 # Even if there are still some available planet, send a portion of the ship to attack
 MAX_RATIO_SHIP_ATTACKERS = 0.10
 # ratio of offensive ship at the start of the game (before the game is full)
-EARLY_RATIO_ATTACKER = 0.9
-EARLY_RATIO_ASSASSIN = 0.1
+EARLY_RATIO_ATTACKER = 1.0
+EARLY_RATIO_ASSASSIN = 0.0
 EARLY_RATIO_DEFENDER = 0.0
 # ratio of offensive ship at the end of the game (after the game is full)
 LATE_RATIO_ATTACKER = 1.0
@@ -86,7 +86,7 @@ PLANET_INFLUENCE = 10
 # The influence of an empty planet
 INFLUENCE_EMPTY_PLANET = 32
 INFLUENCE_ZONE = 32
-INFLUENCE_STEP = 5
+INFLUENCE_STEP = 4
 # Threshold after which the point is considered inside the influence zone
 INFLUENCE_THRESHOLD = 0
 # Nb turn in history we look for the max nb of ship in our influence

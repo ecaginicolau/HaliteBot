@@ -7,5 +7,5 @@ if errorlevel 1 (
    echo [Error building]
    exit /b %errorlevel%
 )
-halite.exe -d "384 256" "python MyBot.py" "..\HaliteBotV43\run_bot.bat" "..\HaliteBotV43\run_bot.bat" "..\HaliteBotV43\run_bot.bat"
+halite.exe -d "384 256" "python MyBot.py" "..\HaliteBotV59\run_bot.bat" "..\HaliteBotV59\run_bot.bat" "..\HaliteBotV59\run_bot.bat"
 
