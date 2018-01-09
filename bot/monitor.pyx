@@ -48,6 +48,8 @@ class Monitor(object):
     __nb_in_influence = None
     # History nb ship in influence
     __history_nb_in_influence = []
+    # Store the miners & futur miners of a planet,indexed by planet id
+    __planets_miners = {}
 
     @staticmethod
     def init(player_id):
@@ -583,3 +585,37 @@ class Monitor(object):
         # Return the number of ship in our influence zone
         logging.debug("nb_ship_in_influence: %s" % Monitor.__nb_in_influence)
         return Monitor.__nb_in_influence
+
+    @staticmethod
+    def check_planets_miners():
+        """
+        Remove dead drone
+        :return:
+        """
+        from .manager import Manager
+        for planet_id, list_drone in Monitor.__planets_miners.items():
+            new_list = []
+            for ship_id in list_drone:
+                if Manager.get_drone(ship_id) is not None:
+                    new_list.append(ship_id)
+            Monitor.__planets_miners[planet_id] = new_list
+
+    @staticmethod
+    def get_planets_miners(planet_id):
+        try:
+            return Monitor.__planets_miners[planet_id]
+        except KeyError:
+            return []
+
+    @staticmethod
+    def add_planets_miner(planet_id, drone):
+        try:
+            Monitor.__planets_miners[planet_id].append(drone)
+        except KeyError:
+            Monitor.__planets_miners[planet_id] = []
+            Monitor.__planets_miners[planet_id].append(drone)
+
+
+
+
+

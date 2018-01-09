@@ -122,6 +122,13 @@ class Manager(object):
         Manager.__all_drones[ship_id].add_possible_threat(distance, threat_id)
 
     @staticmethod
+    def get_drone(ship_id):
+        try:
+            return Manager.__all_drones[ship_id]
+        except KeyError:
+            return None
+
+    @staticmethod
     def check_for_dead_drones():
         """
         [EVERY TURN]
@@ -755,6 +762,7 @@ class Manager(object):
         still_some_free_planet_left = True
         # Find a target for drone without target
         for drone in list_drone_no_target:
+            """
             if still_some_free_planet_left:
                 # Now, look for a suitable empty planet
                 for distance, target_planet in drone.get_free_planet_by_score(dic_nb_available_spot):
@@ -781,8 +789,9 @@ class Manager(object):
                     Manager.change_drone_role(drone, DroneRole.ATTACKER)
             # No more free planets
             else:
-                # Become attacker
-                Manager.change_drone_role(drone, DroneRole.ATTACKER)
+            """
+            # Become attacker
+            Manager.change_drone_role(drone, DroneRole.ATTACKER)
 
     @staticmethod
     def order_defender():
@@ -822,6 +831,16 @@ class Manager(object):
                     distance = calculate_distance_between(drone.ship.pos, defense_point.pos)
                     # Make it the new target (ship type?)
                     drone.assign_target(defense_point, distance, target_type=TargetType.POSITION)
+
+    @staticmethod
+    def order_free_planet():
+        # Loop through all free planet
+        for planet in Monitor.get_free_planets():
+            # Look for free planet that still need some conqueror
+            if planet.nb_available_docking_spots() > len(Monitor.get_planets_miners()):
+                # Look for drone around the planet to assign one
+                # TODO: continue here
+
 
     @staticmethod
     def create_command_queue():
