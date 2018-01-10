@@ -7,7 +7,7 @@ from bot.drone import DroneRole, TargetType, Drone
 from bot.navigation import calculate_distance_between
 from bot.influence import Influence
 from bot.settings import MIN_SHIP_ATTACKERS, MAX_RATIO_SHIP_ATTACKERS, NB_SHIP_THRESHOLD, \
-    MAX_TURN_DURATION, MINER_CAN_DEFEND, MINER_DEFENDER_RADIUS, SAFE_ZONE_RADIUS, MIN_SCORE_DEFENSE, FOLLOW_DISTANCE, EARLY_RATIO_ASSASSIN, EARLY_RATIO_ATTACKER, \
+    MAX_TURN_DURATION, MINER_CAN_DEFEND, SAFE_ZONE_RADIUS, MIN_SCORE_DEFENSE, FOLLOW_DISTANCE, EARLY_RATIO_ASSASSIN, EARLY_RATIO_ATTACKER, \
     EARLY_RATIO_DEFENDER, LATE_RATIO_DEFENDER, LATE_RATIO_ATTACKER, LATE_RATIO_ASSASSIN, DEFENDER_RADIUS, NB_TURN_INFLUENCE, NB_IN_INFLUENCE_RATIO
 # hlt imports
 from hlt.constants import *
@@ -68,6 +68,8 @@ class Manager(object):
         Manager.check_drone_target()
         # Check for newly created ship, convert them to drone
         Manager.check_for_new_ship()
+        # Check miners
+        Monitor.check_planets_miners()
         # Update influence of the game map
         Influence.update_game_map(game_map)
         # Check for new threat
@@ -275,7 +277,6 @@ class Manager(object):
     def get_next_offensive_role():
         """
         This function will return the next offensive DroneRole
-        :param self:
         :return:
         """
         if Monitor.map_has_available_spots():
@@ -341,7 +342,7 @@ class Manager(object):
         """
         if Monitor.map_has_available_spots():
             # While there are still some idle drone, and we have less attackers than ships attacking us
-            while Manager.nb_drone_role(DroneRole.IDLE) > 0 and Manager.nb_offense() < Monitor.nb_ship_in_influence_last_X(NB_TURN_INFLUENCE) * NB_IN_INFLUENCE_RATIO:
+            while Manager.nb_drone_role(DroneRole.IDLE) > 0 and Manager.nb_offense() < Monitor.nb_ship_in_influence_last_x(NB_TURN_INFLUENCE) * NB_IN_INFLUENCE_RATIO:
                 # Change an IDLE Drone to attacker
                 # Look for the idle drone that is the closest to an enemy
                 min_distance = 999
@@ -636,7 +637,7 @@ class Manager(object):
         nemesis = Monitor.find_nemesis()
 
         # Loop through all drone
-        for ship_id in Manager.__all_role_drones[DroneRole.ATTACKER]:
+        for ship_id in list(Manager.__all_role_drones[DroneRole.ATTACKER]):
             # Get the drone
             drone = Manager.__all_drones[ship_id]
             # If the drone has currently no target, look for one
@@ -649,19 +650,33 @@ class Manager(object):
                 # Attack this ship
                 drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
             else:
-                # If there are no enemy close, look for an enemy inside the influence zone
+                # Check that the drone can't become a conqueror for "free"
+                if Influence.is_in_planet_zone(drone.ship.pos):
+                    # Get the planet_id
+                    planet_id = Influence.get_planet_influence(drone.ship.pos)
+                    # Make sure the planet is still free
+                    if Monitor.get_nb_spots_for_miners(planet_id) > 0:
+                        # Change role to CONQUEROR
+                        Manager.change_drone_role(drone, DroneRole.CONQUEROR)
+                        # Get the planet
+                        planet = Monitor.get_planet(planet_id)
+                        # Calculate the distance
+                        distance = calculate_distance_between(planet.pos, drone.ship.pos)
+                        # Add the target to the drone
+                        drone.assign_target(planet, distance, target_type=TargetType.PLANET)
+                        #Add the drone to the list of miner
+                        Monitor.add_planets_miner(planet.id, drone.ship.id)
+                        # Skip to next drone
+                        continue
+
+                # If there are no enemy and no free planet close, look for an enemy inside the influence zone
                 influence_distance, influence_enemy_ship = drone.get_closest_ship_in_influence()
                 if influence_enemy_ship is not None:
                     # Assign the new target, if any available
                     drone.assign_target(influence_enemy_ship, influence_distance, target_type=TargetType.SHIP)
                 else:
-                    # Check if there is still some work for conquerors
-                    if Monitor.map_has_available_spots():
-                        # Convert to conqueror if there are still available spot
-                        Manager.change_drone_role(drone, DroneRole.CONQUEROR)
-                    else:
-                        # Attack the closest ship if there are no spot available
-                        drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+                    # Attack the closest ship
+                    drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
 
 
 
@@ -704,12 +719,6 @@ class Manager(object):
         :return:
         """
 
-        list_free_planet = Monitor.get_free_planets()
-
-        # Keep the number of docking spot available by free planet
-        dic_nb_available_spot = {}
-        for planet in list_free_planet:
-            dic_nb_available_spot[planet.id] = planet.nb_available_docking_spots()
 
         list_drone_no_target = []
         # Loop once through all conqueror drone to handle drone with target
@@ -717,14 +726,7 @@ class Manager(object):
             # Get the drone
             drone = Manager.__all_drones[ship_id]
 
-            """
-            # Check if enemies are in the radius of defense
-            became_defender = Manager.check_drone_defense(drone)
-            if became_defender:
-                # This conqueror became a defender, so don't continue for this drone
-                # Skip to next drone
-                continue
-            """
+            # Defend itself if needed
             became_attacker = Manager.check_drone_surrounding(drone)
             if became_attacker:
                 continue
@@ -740,8 +742,6 @@ class Manager(object):
                     # Skip to next drone
                     continue
 
-                # Reduce the number of available spot for the target by 1
-                dic_nb_available_spot[drone.target.id] -= 1
                 # First, make sure that if the ship can dock to its target!
                 if drone.can_dock(drone.target):
                     # Store old target
@@ -754,22 +754,22 @@ class Manager(object):
                     continue
 
             else:
-                # ADd the drone to no_target list
+                # Add the drone to no_target list
                 # Skip to next ship, if it has no target
                 list_drone_no_target.append(drone)
                 continue
 
-        still_some_free_planet_left = True
         # Find a target for drone without target
         for drone in list_drone_no_target:
-            """
-            if still_some_free_planet_left:
+            # Check if there are still some spots for miners to go
+            if Monitor.map_has_available_spots_for_miners():
                 # Now, look for a suitable empty planet
-                for distance, target_planet in drone.get_free_planet_by_score(dic_nb_available_spot):
+                for distance, target_planet in drone.get_free_planet_by_score():
                     # Check if we can still find an available docking spot on this planet
-                    if dic_nb_available_spot[target_planet.id] > 0:
+                    if Monitor.get_nb_spots_for_miners(target_planet.id) > 0:
                         drone.assign_target(target_planet, distance, target_type=TargetType.PLANET)
-                        dic_nb_available_spot[target_planet.id] -= 1
+                        # Add the drone to the list of miners of the planet
+                        Monitor.add_planets_miner(target_planet.id, drone.ship.id)
 
                         # Check if by chance the drone can dock to its new target, to avoid loosing a turn
                         if drone.can_dock(drone.target):
@@ -781,17 +781,10 @@ class Manager(object):
                             drone.docking(target)
 
                         break
-                # If this done has no target, there are nothing left available, transform into attacker
-                if drone.target is None:
-                    # No reason for any other drone to find a suitable planet anymore
-                    still_some_free_planet_left = False
-                    # Change role to attacker
-                    Manager.change_drone_role(drone, DroneRole.ATTACKER)
-            # No more free planets
             else:
-            """
-            # Become attacker
-            Manager.change_drone_role(drone, DroneRole.ATTACKER)
+                # If there are no spot available, make it an attacker
+                # Change role to attacker
+                Manager.change_drone_role(drone, DroneRole.ATTACKER)
 
     @staticmethod
     def order_defender():
@@ -840,6 +833,7 @@ class Manager(object):
             if planet.nb_available_docking_spots() > len(Monitor.get_planets_miners()):
                 # Look for drone around the planet to assign one
                 # TODO: continue here
+                pass
 
 
     @staticmethod

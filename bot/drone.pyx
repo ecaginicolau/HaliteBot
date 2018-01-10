@@ -299,9 +299,7 @@ class Drone(object):
 
     def get_closest_ship_in_influence(self):
         """
-        Return the closest ship, if a player_id is sent then return the closest ship of this player
-        :param player_id: the player 's ship we are looking for, None for all ships
-        :param docked_only: Only look for docked ships
+        Return the closest ship, inside the player influence
         :return: a single ship
         """
         for distance, enemy_ship in self.__enemy_by_distance:
@@ -414,7 +412,13 @@ class Drone(object):
                 list_distance.append((distance, planet))
         return list_distance
 
-    def get_free_planet_by_score(self, dic_nb_available_spot):
+    def get_best_planet_by_score(self):
+        try:
+            return self.get_free_planet_by_score()[0]
+        except IndexError:
+            None, None
+
+    def get_free_planet_by_score(self):
         """
         return the list of planet (empty or owned) and not full by distance
         :return: list of free planet by distance
@@ -424,7 +428,7 @@ class Drone(object):
             # Make sure the planet is free
             if planet.is_free(self.ship.owner):
                 # Don't look for planet with no available spot anymore
-                if dic_nb_available_spot[planet.id] == 0:
+                if Monitor.get_nb_spots_for_miners(planet.id) == 0:
                     continue
                 # Score is relative to the distance
                 score = distance
@@ -433,6 +437,8 @@ class Drone(object):
                 score /= planet.nb_available_docking_spots() * SCORE_NB_DOCKING_SPOTS
                 # the Score decrease with the number of ship already going to the planet
                 score /= (planet.nb_available_docking_spots() - dic_nb_available_spot[planet.id] + 1) * SCORE_NB_SHIP_ONGOING
+                """
+                """
                 # the score decrease with the distance of the planet to the center
                 score -= calculate_distance_between(planet.pos, Monitor.get_map_center()) * SCORE_DISTANCE_CENTER
                 """

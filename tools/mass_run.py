@@ -53,8 +53,8 @@ class Task:
         :param n: the number of the game, for log display
         :return:
         """
-        # cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteBotV59\\run_bot.bat" """
-        cmd = """halite.exe -r -q  -d "384 256" "python MyBot.py" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" """
+        cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteBotV59\\run_bot.bat" """
+        # cmd = """halite.exe -r -q  -d "384 256" "python MyBot.py" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" """
         output = subprocess.check_output(cmd).decode("ascii")
         data = json.loads(output)
         #pprint( data)

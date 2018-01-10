@@ -1,6 +1,6 @@
 import logging
 from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT, THREAT_BY_TURN_RATIO, DEFENSE_POINT_RADIUS, \
-    INITIAL_SAFE_DISTANCE, MIN_SHIP_ATTACKERS
+    INITIAL_SAFE_DISTANCE
 from bot.navigation import Circle, calculate_distance_between, calculate_direction, calculate_angle_vector, calculate_length
 from hlt.entity import Ship, Position
 from .influence import Influence
@@ -463,7 +463,7 @@ class Monitor(object):
     def update_threat(ship_id, new_threat):
         try:
             Monitor.__threat_level[ship_id] -= new_threat
-        except:
+        except KeyError:
             Monitor.get_threat_level(ship_id)
             Monitor.__threat_level[ship_id] -= new_threat
 
@@ -501,7 +501,7 @@ class Monitor(object):
 
                     # Part 1: Is the enemy ship in our influence zone.
                     # logging.debug("Influence of ship %s: %s" % (ship_id,Influence.get_point_influence(ship.pos)))
-                    Monitor.update_threat(ship_id, Influence.get_point_influence(ship.pos))
+                    Monitor.update_threat(ship_id, Influence.get_point_defense_influence(ship.pos))
 
                     # Part 2: Is the enemy ship going in our direction
                     # Easy : docked = no threat
@@ -545,7 +545,7 @@ class Monitor(object):
                         Manager.add_possible_threat(possible_target.id, distance, ship.id)
 
     @staticmethod
-    def nb_ship_in_influence_last_X(nb_turn):
+    def nb_ship_in_influence_last_x(nb_turn):
         """
         Return the number of enemy ships inside our influence zone
         :return: int
@@ -555,7 +555,7 @@ class Monitor(object):
             nb = int(max(Monitor.__history_nb_in_influence[-nb_turn:]))
             logging.debug("nb_ship_in_influence_last_X: %s" % nb)
             return nb
-        except:
+        except KeyError:
             return 0
 
 
@@ -600,6 +600,13 @@ class Monitor(object):
                     new_list.append(ship_id)
             Monitor.__planets_miners[planet_id] = new_list
 
+    """
+    # Miner version of the "nb spot functions"
+    """
+    @staticmethod
+    def map_has_available_spots_for_miners():
+        return Monitor.get_total_nb_spots_for_miners() > 0
+
     @staticmethod
     def get_planets_miners(planet_id):
         try:
@@ -615,7 +622,18 @@ class Monitor(object):
             Monitor.__planets_miners[planet_id] = []
             Monitor.__planets_miners[planet_id].append(drone)
 
+    @staticmethod
+    def get_total_nb_spots_for_miners():
+        nb = 0
+        for planet in Monitor.get_free_planets():
+            nb += Monitor.get_nb_spots_for_miners(planet.id)
+        return nb
 
-
-
-
+    @staticmethod
+    def get_nb_spots_for_miners(planet_id):
+        try:
+            planet = Monitor.get_planet(planet_id)
+        except KeyError:
+            return 0
+        nb = max(0, planet.num_docking_spots - len(Monitor.get_planets_miners(planet.id)))
+        return nb
