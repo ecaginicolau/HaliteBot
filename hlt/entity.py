@@ -320,7 +320,6 @@ class Ship(Entity):
             game_map.add_ghost((self.pos, ghost))
             # Move
             return self.thrust(final_speed, angle)
-
         # Calculate the intermediate position
         # Take the direction
         new_target = calculate_direction(self.pos, target.pos)

@@ -1,7 +1,9 @@
 import logging
 
-from bot.drone import DroneRole
+from bot.drone import DroneRole, TargetType
 from bot.navigation import Circle, calculate_distance_between
+from bot.settings import SQUAD_SCATTERED_THRESHOLD
+from hlt.entity import Position
 
 logger = logging.getLogger("squad")
 
@@ -60,11 +62,7 @@ class Squad(object):
         leader + members
         :return:
         """
-        nb = 0
-        if self.is_leader_alive():
-            n = 1
-        nb += len(self.__members)
-        return nb
+        return len(self.__members)
 
     def gravitational_center(self):
         """
@@ -72,35 +70,70 @@ class Squad(object):
         :return:
         """
         center = Circle(0,0,0)
-        if self.is_leader_alive():
-            center.x += self.__leader.ship.pos.x
-            center.y += self.__leader.ship.pos.y
         for member in self.__members:
-            center.x += member.ship.pos.x
-            center.y += member.ship.pos.y
+            center += member.ship.pos
         # Now divide by the number of members
-        center.x /= float(self.nb_members())
-        center.y /= float(self.nb_members())
+        center = center / float(self.nb_members())
+        logging.debug("gravitational_center: %s" % center)
         return center
 
-    def promote_new_leader(self):
-        # Get the gravitational_center
+    def squad_radius(self):
+        """
+        # get the radius into which all the squad's drones are
+        :return:
+        """
+        min_x = 999
+        max_x = 0
+        min_y = 999
+        max_y = 0
+        for drone in self.__members:
+            min_x = min(min_x, drone.ship.pos.x)
+            max_x = max(max_x, drone.ship.pos.x)
+            min_y = min(min_y, drone.ship.pos.y)
+            max_y = max(max_y, drone.ship.pos.y)
+        radius = max(max_x - min_x, max_y - min_y)
+        return radius
+
+    def get_leader(self):
+        return self.__leader
+
+    def assign_target(self, target, target_type=None):
+        for drone in self.__members:
+            drone.assign_target(target,target_type=target_type)
+
+    def regroup(self):
+        """
+        # Order all drone to move to center
+        :return:
+        """
         center = self.gravitational_center()
+        position = Position(center.x, center.y)
+        position.pos.radius = self.nb_members() * SQUAD_SCATTERED_THRESHOLD / 2.0
+        # Assign the position as target
 
-        # Look for the member closest of the gravitational center
-        min_distance = 999
-        new_leader = None
-        # Loop through all member
-        for member in self.__members:
-            distance = calculate_distance_between(member.ship.pos, center)
-            if distance < min_distance:
-                min_distance = distance
-                new_leader = member
+        self.assign_target(position, target_type=TargetType.POSITION)
+        # self.assign_target(self.__leader.ship, target_type=TargetType.SHIP)
+        # self.__leader.assign_target(position, target_type=TargetType.POSITION)
 
-        # Promote the leader
-        self.__leader = new_leader
-        # Remove from the list of members
-        self.__members.remove(new_leader)
+
+
+    def promote_new_leader(self):
+        if self.__leader==None:
+            # Get the gravitational_center
+            center = self.gravitational_center()
+
+            # Look for the member closest of the gravitational center
+            min_distance = 999
+            new_leader = None
+            # Loop through all member
+            for member in self.__members:
+                distance = calculate_distance_between(member.ship.pos, center)
+                if distance < min_distance:
+                    min_distance = distance
+                    new_leader = member
+
+            # Promote the leader
+            self.__leader = new_leader
 
     def add_member(self, drone):
         """
@@ -109,3 +142,17 @@ class Squad(object):
         :return:
         """
         self.__members.append(drone)
+        drone.squad = self
+
+    def remover_member(self, drone):
+        """
+        Remove a drone to the squad
+        :param drone:
+        :return:
+        """
+        self.__members.remove(drone)
+        if self.__leader.ship.id == drone.ship.id:
+            self.__leader = None
+            self.promote_new_leader()
+
+

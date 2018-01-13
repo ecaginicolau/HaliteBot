@@ -56,6 +56,8 @@ try:
         Manager.order_assassin()
         # Order attackers to attack
         Manager.order_attacker()
+        # Order squads
+        Manager.order_squad()
         # Order defender to defend
         Manager.order_defender()
         # Order miner to mine
@@ -72,6 +74,8 @@ try:
         logger.info("Turn duration : %.2f" % duration)
         # TURN END
         # GAME END
+        #if Monitor.turn == 100:
+        #    raise Exception("blah")
 except:
     logging.exception("BIG CRASH")
 

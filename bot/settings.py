@@ -20,6 +20,7 @@ DEFENSE_FORWARD = 30
 DEFENSE_POINT_RADIUS = 5
 # Check that no team starts too close, take x turns to arrive
 INITIAL_SAFE_DISTANCE = 120
+
 """
 # Manager parameters
 """
@@ -42,6 +43,9 @@ INTERMEDIATE_RATIO = 0.5
 MIN_SCORE_DEFENSE = 150
 # If the distance between the ship and it's target is bigger than that, then try to predict its destination: 28 ~4 turn max speed
 FOLLOW_DISTANCE = 28
+# Radius into which we count the number of enemiy ships
+ENEMY_SQUAD_RADIUS = 7
+
 
 # Always try to have at least 1 ship attacking (if not alone?)
 MIN_SHIP_ATTACKERS = 0
@@ -70,6 +74,10 @@ SCORE_NB_DOCKING_SPOTS = 1
 SCORE_NB_SHIP_ONGOING = 1
 SCORE_DISTANCE_CENTER = 0.05
 
+# Distance after which we don't need to look for ship during navigation
+NAVIGATION_SHIP_DISTANCE = 90
+
+GHOST_RATIO_RADIUS = 1.6
 """"
 # Navigation parameters
 """
@@ -93,3 +101,11 @@ INFLUENCE_THRESHOLD = 0
 NB_TURN_INFLUENCE = 5
 # Nb enemy ratio
 NB_IN_INFLUENCE_RATIO = 0.8
+
+"""
+# SQUAD
+"""
+SQUAD_DISTANCE_CREATION = 20
+# Radius of the squad by number of ship
+SQUAD_SCATTERED_THRESHOLD = 3
+SQUAD_SIZE = 6

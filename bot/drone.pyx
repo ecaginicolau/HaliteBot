@@ -86,10 +86,11 @@ class Drone(object):
         self.__planet_distance = {}
         # Store the possible threats as a list
         self.__possibles_threats = []
-        # Flag if the drone is alive
-        self.__is_alive = True
         # Flag if the drone has been damaged this X turn
         self.is_damaged = False
+        # Store in which squad is the drone, none by default
+        self.squad = None
+
 
     def update_ship(self, ship):
         """
@@ -102,7 +103,8 @@ class Drone(object):
         self.__possibles_threats = []
 
     def is_alive(self):
-        return self.__is_alive
+        from bot.manager import Manager
+        return Manager.get_drone(self.ship.id) is not None
 
     def add_possible_threat(self, distance, threat):
         self.__possibles_threats.append((distance, threat))
@@ -227,6 +229,11 @@ class Drone(object):
         if role == self.role:
             return
 
+        # Leave the squad
+        if self.squad is not None:
+            self.squad.remove_member(self)
+            self.squad = None
+
         # The role changed!
         # reset the target
         self.reset_target()
@@ -271,6 +278,9 @@ class Drone(object):
             return distance, enemy_ship
         # There are no ships matching this filter
         return None, None
+
+    def get_enemy_by_distance(self):
+        return self.__enemy_by_distance
 
     def get_closest_ship(self, player_id=None, docked_only=False):
         """

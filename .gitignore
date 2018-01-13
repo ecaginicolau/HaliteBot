@@ -10,3 +10,4 @@
 /submissions/old/*.zip
 *.c
 *.pyd
+*.png
