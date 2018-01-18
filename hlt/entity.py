@@ -304,6 +304,11 @@ class Ship(Entity):
         :param closest:  Shold we navigate to the target's position? or the closest position within the radius
         :return:
         """
+        # First exit if the ship is already at the correct locatin
+        distance = calculate_distance_between(self.pos, target.pos)
+        if distance == 0:
+            return self.thrust(0, 0)
+
 
         # Should we navigate to the point directly? or the closest points inside our radius?
         if closest:

@@ -2,7 +2,7 @@ import logging
 
 from bot.drone import DroneRole, TargetType
 from bot.navigation import Circle, calculate_distance_between
-from bot.settings import SQUAD_SCATTERED_THRESHOLD
+from bot.settings import config
 from hlt.entity import Position
 
 logger = logging.getLogger("squad")
@@ -38,7 +38,7 @@ class Squad(object):
                     new_members.append(member)
 
         # Add the new list of member
-        self.__members=new_members
+        self.__members = new_members
 
         # If there are no leader
         if self.__leader is None:
@@ -56,6 +56,9 @@ class Squad(object):
                 return True
         return False
 
+    def get_members(self):
+        return self.__members
+
     def nb_members(self):
         """
         Return the number of members on this squad
@@ -69,7 +72,7 @@ class Squad(object):
         Return the gravitational center of the squad
         :return:
         """
-        center = Circle(0,0,0)
+        center = Circle(0, 0, 0)
         for member in self.__members:
             center += member.ship.pos
         # Now divide by the number of members
@@ -98,8 +101,21 @@ class Squad(object):
         return self.__leader
 
     def assign_target(self, target, target_type=None):
+        # Try to synchronise all drone to the target
+        # Avoid calculating distance twice
+        dic_distance = {}
+        # Get the max distance from drones
+        max_distance = 0
         for drone in self.__members:
-            drone.assign_target(target,target_type=target_type)
+            distance = calculate_distance_between(drone.ship.pos, target.pos)
+            dic_distance[drone] =  distance
+            if distance > max_distance:
+                max_distance = distance
+
+        for drone in self.__members:
+            if max_distance > config.SLOW_TARGET_DISTANCE:
+                drone.speed_ratio = dic_distance[drone] / max_distance
+            drone.assign_target(target, target_type=target_type)
 
     def regroup(self):
         """
@@ -108,17 +124,13 @@ class Squad(object):
         """
         center = self.gravitational_center()
         position = Position(center.x, center.y)
-        position.pos.radius = self.nb_members() * SQUAD_SCATTERED_THRESHOLD / 2.0
+        position.pos.radius = self.nb_members() * config.SQUAD_SCATTERED_THRESHOLD / 2.0
         # Assign the position as target
 
         self.assign_target(position, target_type=TargetType.POSITION)
-        # self.assign_target(self.__leader.ship, target_type=TargetType.SHIP)
-        # self.__leader.assign_target(position, target_type=TargetType.POSITION)
-
-
 
     def promote_new_leader(self):
-        if self.__leader==None:
+        if self.__leader == None:
             # Get the gravitational_center
             center = self.gravitational_center()
 
@@ -155,4 +167,6 @@ class Squad(object):
             self.__leader = None
             self.promote_new_leader()
 
-
+    def merge_squad(self, other_squad):
+        for member in other_squad.get_members():
+            self.add_member(member)

@@ -1,7 +1,6 @@
 import logging
-from bot.settings import SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT, MIN_ANGLE_TARGET, NO_THREAT, THREAT_BY_TURN_RATIO, DEFENSE_POINT_RADIUS, \
-    INITIAL_SAFE_DISTANCE
-from bot.navigation import Circle, calculate_distance_between, calculate_direction, calculate_angle_vector, calculate_length
+from bot.settings import DEFENSE_POINT_RADIUS, config
+from bot.navigation import Circle, calculate_distance_between, calculate_length
 from hlt.entity import Ship, Position
 from .influence import Influence
 
@@ -133,7 +132,7 @@ class Monitor(object):
                 if distance < min_distance:
                     min_distance = distance
         # Check that no team starts too close
-        if min_distance < INITIAL_SAFE_DISTANCE:
+        if min_distance < config.INITIAL_SAFE_DISTANCE:
             MIN_SHIP_ATTACKERS = 1
         else:
             MIN_SHIP_ATTACKERS = 0
@@ -371,178 +370,6 @@ class Monitor(object):
             # Make it a position
             Monitor.__defense_points = Position(defense.x, defense.y, DEFENSE_POINT_RADIUS)
         return Monitor.__defense_points
-
-
-
-    @staticmethod
-    def find_nemesis():
-        """
-        Calculate which player should be targeted next, based on number of ship, number of planets ...
-        # Return the current nemesis if already calculated for this turn
-        - if Monitor.nemesis != None
-        # Otherwise calculate it again
-        - Depends on hyper parameters, SHIP_WEIGHT, PLANET_WEIGHT, PROXIMITY_WEIGHT
-        - Could count which player has been too close of our frontier
-        - The distance between the average of our planets
-        - Many other criteria
-
-        The nemesis can change over time, maybe in the same turn (avoid launching all ships to the same enemy?)
-
-        :return: the player_id of our nemesis
-        """
-
-        # If we have already calculated the nemesis this turn
-        if Monitor.__nemesis is not None:
-            return Monitor.__nemesis
-
-        # If there is only one enemy, no need to calculate anything
-        if len(Monitor.__ship_by_player) == 2:
-            for enemy_id in Monitor.__ship_by_player.keys():
-                if enemy_id != Monitor.player_id:
-                    return enemy_id
-        """
-        # Score calculation
-            - score increase with the number of ship, so SHIP_WEIGHT > 0
-            - score increase with the number of planets, so PLANET_WEIGHT > 0
-            - score decrese as the distance increase, so PROXIMITY_WEIGHT < 0
-
-        # score = SHIP_WEIGHT * nb_ship  + PLANET_WEIGHT *  nb_planet + PROXIMITY_WEIGHT * distance
-        # Bigger score =  bigger threat
-        # Biggest score = nemesis
-        """
-        # Start with getting our own gravitational center
-        team_g_center = Monitor.gravitational_center(Monitor.player_id)
-
-        # Store the score for each enemy
-        enemy_score = {}
-
-        # Loop through all enemies
-        for enemy_id in Monitor.__ship_by_player.keys():
-            # This is not an enemy, it's ourself
-            if enemy_id == Monitor.player_id:
-                # Skip to next player
-                continue
-            # Calculate the gravitational_center
-            enemy_g_center = Monitor.gravitational_center(enemy_id)
-            # Calculate the distance
-            distance = calculate_distance_between(team_g_center, enemy_g_center)
-            # Get the number of ships
-            try:
-                nb_ship = len(Monitor.__ship_by_player[enemy_id])
-            except KeyError:
-                nb_ship = 0
-            # Get the number of planets
-            try:
-                nb_planet = len(Monitor.__planets_by_player[enemy_id])
-            except KeyError:
-                nb_planet = 0
-            # Calculate the score
-            score = SHIP_WEIGHT * nb_ship + PLANET_WEIGHT * nb_planet + PROXIMITY_WEIGHT * distance
-            enemy_score[enemy_id] = score
-
-        # Find the nemesis : the enemy with the biggest score
-        max_score = -9999
-        nemesis = None
-        for enemy_id, score in enemy_score.items():
-            if score > max_score:
-                max_score = score
-                nemesis = enemy_id
-
-        Monitor.__nemesis = nemesis
-        return Monitor.__nemesis
-
-    @staticmethod
-    def get_threat_level(ship_id):
-        try:
-            return Monitor.__threat_level[ship_id]
-        except KeyError:
-            Monitor.__threat_level[ship_id] = NO_THREAT / 2
-            return Monitor.__threat_level[ship_id]
-
-    @staticmethod
-    def update_threat(ship_id, new_threat):
-        try:
-            Monitor.__threat_level[ship_id] -= new_threat
-        except KeyError:
-            Monitor.get_threat_level(ship_id)
-            Monitor.__threat_level[ship_id] -= new_threat
-
-    @staticmethod
-    def calculate_threat_level():
-        """
-        Give a threat level for every enemy ship
-        :return:
-        """
-        from bot.manager import Manager
-
-        # Clean threat level of ship that died
-        for ship_id in list(Monitor.__threat_level.keys()):
-            try:
-                # Check if the ship can be still found in the list of enemy ship
-                Monitor.__all_ships_dict[ship_id]
-            except KeyError:
-                # Remove the ship if it can't be found
-                del Monitor.__threat_level[ship_id]
-
-        # Store the old threat level for delta calculation
-        # old_threat_level = Monitor.__threat_level
-
-        # loop through all enemy ship
-        for enemy_id, list_ship in Monitor.__ship_by_player.items():
-            # Don't check our own ships
-            if enemy_id != Monitor.player_id:
-                for ship_id in list_ship:
-                    ship = Monitor.__all_ships_dict[ship_id]
-                    """
-                    # 2 parts threat calculation: 
-                        - Is the enemy ship in our influence zone.
-                        - Is the enemy ship going in our direction
-                    """
-
-                    # Part 1: Is the enemy ship in our influence zone.
-                    # logging.debug("Influence of ship %s: %s" % (ship_id,Influence.get_point_influence(ship.pos)))
-                    Monitor.update_threat(ship_id, Influence.get_point_defense_influence(ship.pos))
-
-                    # Part 2: Is the enemy ship going in our direction
-                    # Easy : docked = no threat
-                    if ship.docking_status != Ship.DockingStatus.UNDOCKED:
-                        Monitor.__threat_level[ship.id] = NO_THREAT
-                        # Skip to next ship
-                        continue
-
-                    # Try to guess the target
-                    # Skip if the velocity is null
-                    if ship.velocity.x == 0 and ship.velocity.y == 0:
-                        #Monitor.__threat_level[ship.id] = NO_THREAT
-                        continue
-                    smallest_angle = 360
-                    possible_target = None
-                    for other_ship_id, other_ship in Monitor.__all_ships_dict.items():
-                        # If they belong to the same owner, don't look
-                        if ship.owner == other_ship.owner:
-                            continue
-
-                        # Calculate the direction between the 2 ships
-                        delta = calculate_direction(ship.pos, other_ship.pos)
-                        # Calculate the angle between the direction and the velocity
-                        angle = calculate_angle_vector(ship.velocity, delta)
-                        # Get an absolute angle: 10° == 350°
-                        angle = min(angle, 360 - angle)
-                        # logger.info("Dir: %.2f:%.2f, vel: %.2f:%.2f Angle between ship: %s & ship: %s is %s"  %
-                        #  (delta.x, delta.y, ship.velocity.x, ship.velocity.y,ship_id, other_ship_id, angle))
-                        if angle < smallest_angle:
-                            smallest_angle = angle
-                            possible_target = other_ship
-
-                    # Update the threat of that ship, the smallest the angle the more the threat increase (threat value decrease)
-                    angle_threat = (90 - smallest_angle) * THREAT_BY_TURN_RATIO
-                    Monitor.update_threat(ship_id, angle_threat)
-
-                    if (possible_target is not None) and (smallest_angle < MIN_ANGLE_TARGET) and (possible_target.owner.id == Monitor.player_id):
-                        # The threat is an estimation of the number it would take to the ship to arrives
-                        distance = calculate_distance_between(ship.pos, possible_target.pos)
-                        Monitor.__threat_level[ship.id] = distance
-                        Manager.add_possible_threat(possible_target.id, distance, ship.id)
 
     @staticmethod
     def nb_ship_in_influence_last_x(nb_turn):

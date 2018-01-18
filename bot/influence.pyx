@@ -1,4 +1,4 @@
-from bot.settings import SHIP_INFLUENCE, PLANET_INFLUENCE, INFLUENCE_STEP, INFLUENCE_ZONE, INFLUENCE_THRESHOLD
+from bot.settings import config, INFLUENCE_THRESHOLD
 from PIL import Image, ImageDraw
 from collections import defaultdict
 import os
@@ -33,12 +33,12 @@ class Influence(object):
             Influence.__circle_to_draw_dict[color].append([min_x, min_y, max_x, max_y])
         else:
             # Other planets or ships have a gradient of influence zone
-            for i in range(INFLUENCE_STEP):
-                min_x = entity.pos.x - entity.pos.radius - influence * (INFLUENCE_STEP - i)
-                min_y = entity.pos.y - entity.pos.radius - influence * (INFLUENCE_STEP - i)
-                max_x = entity.pos.x + entity.pos.radius + influence * (INFLUENCE_STEP - i)
-                max_y = entity.pos.y + entity.pos.radius + influence * (INFLUENCE_STEP - i)
-                color = INFLUENCE_ZONE * (i + 1)
+            for i in range(config.INFLUENCE_STEP):
+                min_x = entity.pos.x - entity.pos.radius - influence * (config.INFLUENCE_STEP - i)
+                min_y = entity.pos.y - entity.pos.radius - influence * (config.INFLUENCE_STEP - i)
+                max_x = entity.pos.x + entity.pos.radius + influence * (config.INFLUENCE_STEP - i)
+                max_y = entity.pos.y + entity.pos.radius + influence * (config.INFLUENCE_STEP - i)
+                color = config.INFLUENCE_ZONE * (i + 1)
                 Influence.__circle_to_draw_dict[color].append([min_x, min_y, max_x, max_y])
 
     @staticmethod
@@ -62,13 +62,13 @@ class Influence(object):
         for ship in Influence.game_map.get_me().all_ships():
             # Draw a circle for every ship that is docked
             if ship.docking_status != Ship.DockingStatus.UNDOCKED:
-                Influence.add_circle_position(ship, SHIP_INFLUENCE, free_planet=False)
+                Influence.add_circle_position(ship, config.SHIP_INFLUENCE, free_planet=False)
 
         # Get the influence zone of every planets
         for planet in Influence.game_map.all_planets():
             # Make sure it's our planet
             if planet.is_owned() and planet.owner.id == Influence.player_id:
-                Influence.add_circle_position(planet, PLANET_INFLUENCE, free_planet=False)
+                Influence.add_circle_position(planet, config.PLANET_INFLUENCE, free_planet=False)
 
         # Now draw , ordered by color
         for color in sorted(Influence.__circle_to_draw_dict.keys()):
@@ -93,7 +93,7 @@ class Influence(object):
         for planet_id, planet in Monitor.get_all_planets_dict().items():
             # Draw a circle for every planet that is free
             if (not planet.is_owned() or planet.owner.id == Influence.player_id) and Monitor.get_nb_spots_for_miners(planet_id) > 0:
-                Influence.add_circle_position(planet, SHIP_INFLUENCE, free_planet=True)
+                Influence.add_circle_position(planet, config.SHIP_INFLUENCE, free_planet=True)
 
         # Now draw , ordered by color
         for color in sorted(Influence.__circle_to_draw_dict.keys()):

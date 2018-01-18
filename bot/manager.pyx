@@ -2,14 +2,13 @@
 import logging
 from datetime import datetime
 # Bot imports
+
 from bot.monitor import Monitor
 from bot.drone import DroneRole, TargetType, Drone
-from bot.navigation import calculate_distance_between
+from bot.navigation import calculate_distance_between, calculate_length
 from bot.influence import Influence
-from bot.settings import MIN_SHIP_ATTACKERS, MAX_RATIO_SHIP_ATTACKERS, NB_SHIP_THRESHOLD, \
-    MAX_TURN_DURATION, MINER_CAN_DEFEND, SAFE_ZONE_RADIUS, MIN_SCORE_DEFENSE, FOLLOW_DISTANCE, EARLY_RATIO_ASSASSIN, EARLY_RATIO_ATTACKER, \
-    EARLY_RATIO_DEFENDER, LATE_RATIO_DEFENDER, LATE_RATIO_ATTACKER, LATE_RATIO_ASSASSIN, DEFENDER_RADIUS, NB_TURN_INFLUENCE, NB_IN_INFLUENCE_RATIO, SQUAD_DISTANCE_CREATION, \
-    SQUAD_SCATTERED_THRESHOLD, SQUAD_SIZE, ENEMY_SQUAD_RADIUS, INITIAL_SAFE_DISTANCE
+from bot.settings import  NB_SHIP_THRESHOLD, MAX_TURN_DURATION, MINER_CAN_DEFEND, MIN_SCORE_DEFENSE, FOLLOW_DISTANCE, EARLY_RATIO_ASSASSIN, EARLY_RATIO_ATTACKER, \
+    EARLY_RATIO_DEFENDER, LATE_RATIO_DEFENDER, LATE_RATIO_ATTACKER, LATE_RATIO_ASSASSIN, config
 # hlt imports
 from bot.squad import Squad
 from hlt.constants import *
@@ -21,8 +20,6 @@ from hlt.entity import Ship, Position
     - Check for dead drone every turn
     - Check for damaged drone every turn
 """
-
-
 class Manager(object):
     """
     The role of this class is to manage every drone
@@ -76,10 +73,17 @@ class Manager(object):
         Monitor.check_planets_miners()
         # Update influence of the game map
         Influence.update_game_map(game_map)
-        # Check for new threat
-        Monitor.calculate_threat_level()
         # Calculate the number of ship in the influence zone everyturn
         Monitor.nb_ship_in_influence()
+        # add the center of the map as a ghost, to avoid it
+        if config.CENTER_GHOST:
+            Manager.add_ghost_center()
+
+    @staticmethod
+    def add_ghost_center():
+        center = Monitor.get_map_center()
+        center.radius = 10
+        Manager.game_map.add_ghost((center, center))
 
     # Return the role of a single ship
     @staticmethod
@@ -171,7 +175,7 @@ class Manager(object):
                 continue
             # If the squad has already be done, skip it
             try:
-                squad_done[drone.squad]
+                _ = squad_done[drone.squad]
                 # We found it, skip the drone
                 continue
             except KeyError:
@@ -376,7 +380,7 @@ class Manager(object):
         # Get the only planet
         planet = set_planet.pop()
         # If the distance between the planet and our gravitational center is less than INITIAL_SAFE_DISTANCE => all in !
-        if calculate_distance_between(planet.pos, Monitor.gravitational_center(Manager.player_id)) < INITIAL_SAFE_DISTANCE:
+        if calculate_distance_between(planet.pos, Monitor.gravitational_center(Manager.player_id)) < config.INITIAL_SAFE_DISTANCE:
             return True
 
         # No all in
@@ -411,7 +415,7 @@ class Manager(object):
         """
         if Monitor.map_has_available_spots():
             # While there are still some idle drone, and we have less attackers than ships attacking us
-            while Manager.nb_drone_role(DroneRole.IDLE) > 0 and Manager.nb_offense() < Monitor.nb_ship_in_influence_last_x(NB_TURN_INFLUENCE) * NB_IN_INFLUENCE_RATIO:
+            while Manager.nb_drone_role(DroneRole.IDLE) > 0 and Manager.nb_offense() < Monitor.nb_ship_in_influence_last_x(config.NB_TURN_INFLUENCE) * config.NB_IN_INFLUENCE_RATIO:
                 # Change an IDLE Drone to attacker
                 # Look for the idle drone that is the closest to an enemy
                 min_distance = 999
@@ -454,70 +458,6 @@ class Manager(object):
         Manager.role_status()
 
     @staticmethod
-    def give_role_idle_drone2():
-        """
-        [EVERY TURN]
-        Loop through all idle drone to give them a role
-            - Always try to have some attackers : between MIN_SHIP_ATTACKERS & MAX_RATIO_SHIP_ATTACKERS
-            - All remaining drone are defaulted to CONQUEROR
-            - At the end no idle drone should remains
-        :return:
-        """
-        Manager.role_status()
-        # If there are Idle drones
-        if Manager.nb_drone_role(DroneRole.IDLE) > 0:
-            # First:  Make sure there are still some available spots to dock
-            if Monitor.map_has_available_spots():
-                """
-                # Not all drone should be attackers if there are still planets to conquer/mine
-                # Assign offensive drone based on different ratio
-                """
-                # First make sure there are enough attacker
-                while Manager.nb_drone_role(DroneRole.IDLE) > 0 and\
-                        (Manager.nb_offense() < MIN_SHIP_ATTACKERS or Manager.future_ratio_offense() < MAX_RATIO_SHIP_ATTACKERS):
-                    # Change an IDLE Drone to attacker
-                    # Look for the idle drone that is the closest to an enemy
-                    min_distance = 999
-                    selected_drone = None
-                    for ship_id in Manager.__all_role_drones[DroneRole.IDLE]:
-                        drone = Manager.__all_drones[ship_id]
-                        distance, target = drone.get_closest_ship()
-                        if distance < min_distance:
-                            selected_drone = drone
-                            min_distance = distance
-                    # Now work with the drone that is the closest to an enemy
-                    # Get the next offensive role to assign
-                    role = Manager.get_next_offensive_role()
-                    # Assign the role to the drone
-                    Manager.change_drone_role(selected_drone, role)
-
-                """
-                #Give the Conqueror role
-                """
-                # Affect all remaining idle to conqueror role
-                # Copy the list of ship_id for modification
-                list_ship_id = list(Manager.__all_role_drones[DroneRole.IDLE])
-                for ship_id in list_ship_id:
-                    drone = Manager.__all_drones[ship_id]
-                    Manager.change_drone_role(drone, DroneRole.CONQUEROR)
-            # Else: there are no empty planets : default role = ATTACKER
-            else:
-                """
-                # since there are no available spot to dock, we don't need to conquer/mine anymore
-                # Create only offensive drone
-                """
-                # Affect all remaining idle to conqueror role
-                # Copythe list of ship_id for modification
-                list_ship_id = list(Manager.__all_role_drones[DroneRole.IDLE])
-                for ship_id in list_ship_id:
-                    drone = Manager.__all_drones[ship_id]
-                    # Get the next offensive role to assign
-                    role = Manager.get_next_offensive_role()
-                    # Assign the role
-                    Manager.change_drone_role(drone, role)
-        Manager.role_status()
-
-    @staticmethod
     def check_drone_target():
         """
         [EVERY TURN]
@@ -529,6 +469,8 @@ class Manager(object):
         :return:
         """
         for ship_id, drone in Manager.__all_drones.items():
+            # Reset speed ratioto the target
+            drone.speed_ratio = None
             # If the drone had a target already
             if drone.target_id is not None:
                 # If the drone is currently targeting a ship
@@ -563,20 +505,27 @@ class Manager(object):
                         continue
 
     @staticmethod
-    def __navigate_target(ship, target, assassin=False, closest=True):
+    def __navigate_target(drone, target, assassin=False, closest=True):
         """
         Simple method to create a command to attack the closest ship
-        :param ship:
+        :param drone:
         :return: the navigate command
         """
         # logging.debug("Going to generate a navigate command between ship %s and target %s" % (ship.id, target.id))
+        # modify speed if speed_ratio is not None
+        speed = int(MAX_SPEED)
 
+        if config.SLOW_TO_TARGET:
+            if drone.speed_ratio is not None and drone.target_type == TargetType.SHIP:
+                speed = speed * (1 - config.SLOW_SPEED_RATIO) + speed * config.SLOW_SPEED_RATIO * drone.speed_ratio
+                speed = int(round(speed))
+                logging.debug("Slowing drone to speed: %s" % speed)
         navigate_command = None
         if target is not None:
-            navigate_command = ship.navigate(
+            navigate_command = drone.ship.navigate(
                 target,
                 Manager.game_map,
-                speed=int(MAX_SPEED),
+                speed=speed,
                 angular_step=1,
                 ignore_planets=False,
                 ignore_ships=False,
@@ -589,46 +538,49 @@ class Manager(object):
         return navigate_command
 
     @staticmethod
-    def __intercept_ship(ship, target, distance):
-        if distance > FOLLOW_DISTANCE:
-            new_target = target.pos + (target.velocity * (FOLLOW_DISTANCE / MAX_SPEED))
-            new_target = Position(new_target.x, new_target.y)
-            return Manager.__navigate_target(ship, new_target, closest=False)
-        return Manager.__navigate_target(ship, target)
+    def __intercept_ship(drone, target, distance):
+        new_target = target.pos + (target.velocity * (FOLLOW_DISTANCE / MAX_SPEED))
+        new_target = Position(new_target.x, new_target.y)
+        drone.assign_target(target = new_target, target_type=TargetType.POSITION)
+        return Manager.__navigate_target(drone, new_target, closest=False)
 
     @staticmethod
-    def __suicide_ship_command(ship, target, assassin=False):
+    def __suicide_ship_command(drone, target, assassin=False):
         """
         Simple method to create a command to collide to a target
-        :param ship:
+        :param drone:
         :return: the navigate command
         """
-        return Manager.__navigate_target(ship, target, assassin=assassin, closest=False)
+        return Manager.__navigate_target(drone, target, assassin=assassin, closest=False)
 
     @staticmethod
-    def __attack_ship_command(ship, target, assassin=False):
+    def __attack_ship_command(drone, target, assassin=False):
         """
         Simple method to create a command to attack a target ship
-        :param ship:
+        :param drone:
         :return: the navigate command
         """
-        return Manager.__navigate_target(ship, target, assassin=assassin)
+        if config.INTERCEPT:
+            if drone.target_type == TargetType.SHIP:
+                if drone.target_distance > FOLLOW_DISTANCE:
+                    return Manager.__intercept_ship(drone, target, drone.target_distance)
+        return Manager.__navigate_target(drone, target, assassin=assassin)
 
     @staticmethod
-    def __conquer_ship_command(ship, target):
+    def __conquer_ship_command(drone, target):
         """
         Simple method to create a command to conquer a target planet
-        :param ship:
+        :param drone:
         :return: the navigate command
         """
-        return Manager.__navigate_target(ship, target)
+        return Manager.__navigate_target(drone, target)
 
     @staticmethod
     def check_drone_surrounding(drone):
         # Check if enemies are in the radius of defense
         # Get the distance of the closest enemy ship
         distance, ship = drone.get_closest_ship()
-        if distance <= DEFENDER_RADIUS:
+        if distance <= config.DEFENDER_RADIUS:
             # Change drone role to DEFENDER
             Manager.change_drone_role(drone, DroneRole.ATTACKER)
             return True
@@ -649,7 +601,7 @@ class Manager(object):
         # Check if enemies are in the radius of defense
         # Get the distance of the closest enemy ship
         distance, ship = drone.get_closest_ship()
-        if distance <= DEFENDER_RADIUS:
+        if distance <= config.DEFENDER_RADIUS:
             # Change drone role to DEFENDER
             Manager.change_drone_role(drone, DroneRole.DEFENDER)
             return True
@@ -668,27 +620,93 @@ class Manager(object):
         :return:
         """
 
-        # Get the current nemesis
-        nemesis = Monitor.find_nemesis()
-
         # Loop through all drone
         for ship_id in Manager.__all_role_drones[DroneRole.ASSASSIN]:
             # Get the drone
             drone = Manager.__all_drones[ship_id]
             if drone.target is None:
-                # Look for the closest ship of our nemesis that is docked
-                distance, enemy_ship = drone.get_furthest_ship(player_id=nemesis, docked_only=True)
+                # Look for the furthest ship that is docked
+                distance, enemy_ship = drone.get_furthest_ship(docked_only=True)
                 #If we've found a docked ship
                 if enemy_ship is not None:
                     drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
                 # If there are no docked ship
                 else:
-                    # move to the gravitational center of our nemesis
-                    center = Monitor.gravitational_center(nemesis)
-                    position = Position(center.x, center.y, center.radius)
-                    distance = calculate_distance_between(drone.ship.pos, position.pos)
-                    # Assign the target
-                    drone.assign_target(position, distance, target_type=TargetType.POSITION)
+                    # Look for the furthest ship
+                    distance, enemy_ship = drone.get_furthest_ship()
+                    drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+
+    @staticmethod
+    def get_nb_enemy_behind(drone, enemy_ship, distance):
+        # Locate the center of the enemy squad we will look
+        # 1: get the direction between the leader and its starget
+        direction = enemy_ship.pos - drone.ship.pos
+        # 2: normalize
+        direction /= calculate_length(direction)
+        # 3: set the direction size to ENEMY_SQUAD_RADIUS / 2.0
+        direction *= config.ENEMY_SQUAD_RADIUS / 2.0
+        # 4: get the center point
+        center =  enemy_ship.pos + direction
+        # Look for the number of ship in the neighborhood
+        nb = 0
+        for other_distance, other_ship in drone.get_enemy_by_distance():
+            # Don't need to calculate the distance with the default enemy ship
+            if other_ship == enemy_ship:
+                nb += 1
+                continue
+            # Don't count docked ship
+            if other_ship.docking_status != Ship.DockingStatus.UNDOCKED:
+                continue
+            # Don't look for ship that are too far away
+            if other_distance > distance + config.ENEMY_SQUAD_RADIUS * 2.0:
+                break
+            if calculate_distance_between(center, other_ship.pos) <= config.ENEMY_SQUAD_RADIUS:
+                nb += 1
+        logging.debug("[SQUAD] There are %s enemies in the enemy squad" % nb)
+        return nb
+
+    @staticmethod
+    def merge_squad():
+        squad_done = {}
+        squad_done = {}
+        for ship_id in list(Manager.__all_role_drones[DroneRole.ATTACKER]):
+            drone = Manager.__all_drones[ship_id]
+
+            # If the drone has no squad, skip
+            if drone.squad is None:
+                # Skip to next drone
+                continue
+
+            # Only check leaders
+            if drone.squad.get_leader !=  drone:
+                continue
+
+            # Make sure we haven't given order to this squad yet
+            try:
+                _ = squad_done[drone.squad]
+                # They key is present, so skip to next drone
+                continue
+            except KeyError:
+                # Insert this squad as "done"
+                squad_done[drone.squad] = 1
+                pass
+
+            for other_ship_id in Manager.__all_role_drones[DroneRole.ATTACKER]:
+                other_drone = Manager.__all_drones[ship_id]
+                # Don't check itself
+                if drone == other_drone:
+                    continue
+                # If the other_drone has no squad, skip
+                if other_drone.squad is None:
+                    # Skip to next drone
+                    continue
+                # Only check leaders
+                if other_drone.squad.get_leader !=  other_drone:
+                    continue
+
+                if calculate_distance_between(other_drone.ship.pos, drone.ship.pos) < config.SQUAD_DISTANCE_CREATION:
+                    drone.squad.merge_squad(other_drone.squad)
+
 
     @staticmethod
     def order_squad():
@@ -703,7 +721,7 @@ class Manager(object):
 
             # Make sure we haven't given order to this squad yet
             try:
-                squad_done[drone.squad]
+                _ = squad_done[drone.squad]
                 # They key is present, so skip to next drone
                 continue
             except KeyError:
@@ -712,7 +730,7 @@ class Manager(object):
                 pass
 
             # If the squad is too scattered, regroup it
-            if drone.squad.squad_radius() > drone.squad.nb_members() * SQUAD_SCATTERED_THRESHOLD * 2.0:
+            if drone.squad.squad_radius() > drone.squad.nb_members() * config.SQUAD_SCATTERED_THRESHOLD * 2.0:
                 logging.debug("Squad is scattered, need to regroup")
                 drone.squad.regroup()
             else:
@@ -723,35 +741,31 @@ class Manager(object):
                 # Look for the closest ship
                 distance, enemy_ship = leader.get_closest_ship()
                 # Check if there is an enemy around the ship
-                if distance <= SAFE_ZONE_RADIUS:
-                    """
-                    # Look for the number of ship in the neighborhood
-                    nb = 0
-                    for other_distance, other_ship in leader.get_enemy_by_distance():
-                        # Don't need to calculate the distance with the default enemy ship
-                        if other_ship == enemy_ship:
-                            nb += 1
-                            continue
-                        # Don't count docked ship
-                        if other_ship.docking_status != Ship.DockingStatus.UNDOCKED:
-                            continue
-                        # Don't look for ship that are too far away
-                        if other_distance > distance + ENEMY_SQUAD_RADIUS:
-                            break
-                        if calculate_distance_between(enemy_ship.pos, other_ship.pos) <= ENEMY_SQUAD_RADIUS:
-                            nb += 1
-                    logging.debug("[SQUAD] There are %s enemies in the enemy squad" % nb)
-                    # If there are too many enemies, run away!
-                    if nb > drone.squad.nb_members():
-                        logging.debug("[SQUAD] squad leader %s is running away from closest ship %s" % (leader.ship.id, enemy_ship.id))
-                        target_pos = (enemy_ship.pos - leader.ship.pos) * -1
-                        position = Position(target_pos.x, target_pos.y)
-                        drone.squad.assign_target(position, target_type=TargetType.POSITION)
+                if distance <= config.CONTACT_ZONE_RADIUS:
+                    if config.SQUAD_RUN_AWAY:
+                        nb = Manager.get_nb_enemy_behind(leader, enemy_ship, distance)
+                        # If there are too many enemies, run away!
+                        if nb > drone.squad.nb_members() * config.SQUAD_BRAVERY:
+                            if config.SQUAD_REGROUP:
+                                logging.debug("[SQUAD] squad leader %s is running away from closest ship %s => regroup" % (leader.ship.id, enemy_ship.id))
+                                drone.squad.regroup()
+                            else:
+                                logging.debug("[SQUAD] squad leader %s is running away from closest ship %s" % (leader.ship.id, enemy_ship.id))
+                                direction =  (enemy_ship.pos - leader.ship.pos) * -1
+                                dir_len = calculate_length(direction)
+                                if dir_len < MAX_SPEED:
+                                    direction = (direction / dir_len) * MAX_SPEED
+                                target_pos = leader.ship.pos + direction
+                                position = Position(target_pos.x, target_pos.y)
+                                drone.squad.assign_target(position, target_type=TargetType.POSITION)
+                        else:
+                            # Attack this ship
+                            logging.debug("[SQUAD] squad leader %s attacking closest ship (SAFE_ZONE_RADIUS) %s" % (leader.ship.id, enemy_ship.id))
+                            drone.squad.assign_target(enemy_ship, target_type=TargetType.SHIP)
                     else:
-                    """
-                    # Attack this ship
-                    logging.debug("[SQUAD] squad leader %s attacking closest ship (SAFE_ZONE_RADIUS) %s" % (leader.ship.id, enemy_ship.id))
-                    drone.squad.assign_target(enemy_ship, target_type=TargetType.SHIP)
+                        # Attack this ship
+                        logging.debug("[SQUAD] squad leader %s attacking closest ship (SAFE_ZONE_RADIUS) %s" % (leader.ship.id, enemy_ship.id))
+                        drone.squad.assign_target(enemy_ship, target_type=TargetType.SHIP)
                 else:
                     # If there are no enemy close look for an enemy inside the influence zone
                     influence_distance, influence_enemy_ship = leader.get_closest_ship_in_influence()
@@ -775,71 +789,68 @@ class Manager(object):
             # Get the drone
             drone = Manager.__all_drones[ship_id]
 
-            # Try to create squad
-            if drone.squad is None:
-                logging.debug("Drone: %s has no squad" % drone.ship.id)
-                squad_created = False
-                # Find the number of attacker drone inside the radius, join or create squad if it's the case
-                for other_ship_id in  list(Manager.__all_role_drones[DroneRole.ATTACKER]):
-                    # Don't look at itself
-                    if other_ship_id == ship_id:
-                        # Skip next ship
-                        continue
-                    other_drone = Manager.__all_drones[other_ship_id]
-                    if calculate_distance_between(drone.ship.pos, other_drone.ship.pos) < SQUAD_DISTANCE_CREATION:
-                        # We have a squad here!
-                        squad_created = True
-                        logging.debug("Found close attacker to join in squad")
-                        if other_drone.squad is not None and other_drone.squad.nb_members() < SQUAD_SIZE:
-                            logging.debug("Squad exist and not full, joining it")
-                            other_drone.squad.add_member(drone)
-                        else:
-                            logging.debug("Squad doesn't exist or is full, create it")
-                            new_squad = Squad()
-                            new_squad.add_member(drone)
-                            new_squad.add_member(other_drone)
-                            new_squad.promote_new_leader()
-                        # Don't look for other drone
-                        break
-            else:
-                # logging.debug("Drone: %s has already a squad" % drone.ship.id)
-                # Skip to next drone
-                continue
+            if config.CREATE_SQUAD:
+                # Try to create squad
+                if drone.squad is None:
+                    logging.debug("Drone: %s has no squad" % drone.ship.id)
+                    squad_created = False
+                    # Find the number of attacker drone inside the radius, join or create squad if it's the case
+                    for other_ship_id in  list(Manager.__all_role_drones[DroneRole.ATTACKER]):
+                        # Don't look at itself
+                        if other_ship_id == ship_id:
+                            # Skip next ship
+                            continue
+                        other_drone = Manager.__all_drones[other_ship_id]
+                        if calculate_distance_between(drone.ship.pos, other_drone.ship.pos) < config.SQUAD_DISTANCE_CREATION:
+                            # We have a squad here!
+                            squad_created = True
+                            logging.debug("Found close attacker to join in squad")
+                            if other_drone.squad is not None and other_drone.squad.nb_members() < config.SQUAD_SIZE:
+                                logging.debug("Squad exist and not full, joining it")
+                                other_drone.squad.add_member(drone)
+                            else:
+                                logging.debug("Squad doesn't exist or is full, create it")
+                                new_squad = Squad()
+                                new_squad.add_member(drone)
+                                new_squad.add_member(other_drone)
+                                new_squad.promote_new_leader()
+                            # Don't look for other drone
+                            break
+                else:
+                    # logging.debug("Drone: %s has already a squad" % drone.ship.id)
+                    # Skip to next drone
+                    continue
 
             # Only handle squad less drone
             if drone.squad is None:
                 # Look for the closest ship
                 distance, enemy_ship = drone.get_closest_ship()
                 # Check if there is an enemy around the ship
-                if distance <= SAFE_ZONE_RADIUS:
-                    """
-                    nb = 0
-                    for other_distance, other_ship in drone.get_enemy_by_distance():
-                        # Don't need to calculate the distance with the default enemy ship
-                        if other_ship == enemy_ship:
-                            nb += 1
-                            continue
-                        # Don't count docked ship
-                        if other_ship.docking_status != Ship.DockingStatus.UNDOCKED:
-                            continue
-                        # Don't look for ship that are too far away
-                        if other_distance > distance + ENEMY_SQUAD_RADIUS:
-                            break
-                        if calculate_distance_between(enemy_ship.pos, other_ship.pos) <= ENEMY_SQUAD_RADIUS:
-                            nb += 1
-                    logging.debug("There are %s enemies in the enemy squad" % nb)
-                    # If there are too many enemies, run away!
-                    if nb > 1:
-                        logging.debug("drone %s is running away from closest ship %s" % (drone.ship.id, enemy_ship.id))
-                        target_pos = (enemy_ship.pos - drone.ship.pos) * -1
-                        position = Position(target_pos.x, target_pos.y)
-                        drone.assign_target(position, target_type=TargetType.POSITION)
+                if distance <= config.CONTACT_ZONE_RADIUS:
+                    if config.SQUAD_RUN_AWAY:
+                        nb = Manager.get_nb_enemy_behind(drone, enemy_ship, distance)
+                        logging.debug("There are %s enemies in the enemy squad" % nb)
+
+                        # If there are too many enemies, run away!
+                        if nb > 1:
+                            logging.debug("drone %s is running away from closest ship %s" % (drone.ship.id, enemy_ship.id))
+                            direction =  (enemy_ship.pos - drone.ship.pos) * -1
+                            dir_len = calculate_length(direction)
+                            if dir_len < MAX_SPEED:
+                                direction = (direction / dir_len) * MAX_SPEED
+                            target_pos = drone.ship.pos + direction
+                            position = Position(target_pos.x, target_pos.y)
+                            drone.assign_target(position, target_type=TargetType.POSITION)
+                        else:
+                            # Attack this ship
+                            logging.debug("drone %s attacking closest ship (SAFE_ZONE_RADIUS) %s" % (drone.ship.id, enemy_ship.id))
+                            # Attack this ship
+                            drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
                     else:
-                    """
-                    # Attack this ship
-                    logging.debug("drone %s attacking closest ship (SAFE_ZONE_RADIUS) %s" % (drone.ship.id, enemy_ship.id))
-                    # Attack this ship
-                    drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+                        # Attack this ship
+                        logging.debug("drone %s attacking closest ship (SAFE_ZONE_RADIUS) %s" % (drone.ship.id, enemy_ship.id))
+                        # Attack this ship
+                        drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
 
                 else:
                     # Check that the drone can't become a conqueror for "free"
@@ -882,20 +893,15 @@ class Manager(object):
         :return:
         """
 
-        # Get the current nemesis
-        nemesis = Monitor.find_nemesis()
 
         # Loop through all drone
         for ship_id in list(Manager.__all_role_drones[DroneRole.ATTACKER]):
             # Get the drone
             drone = Manager.__all_drones[ship_id]
             # If the drone has currently no target, look for one
-            # if drone.target is None:
-            # Look for the closest ship of our nemesis
-            #distance, enemy_ship = drone.get_closest_ship(player_id=nemesis)
             distance, enemy_ship = drone.get_closest_ship()
             # Check if there is an enemy around the ship
-            if distance <= SAFE_ZONE_RADIUS:
+            if distance <= config.SAFE_ZONE_RADIUS:
                 # Attack this ship
                 drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
             else:
@@ -1012,6 +1018,14 @@ class Manager(object):
         for drone in list_drone_no_target:
             # Check if there are still some spots for miners to go
             if Monitor.map_has_available_spots_for_miners():
+                # Get the closest ship
+                distance, enemy_ship  = drone.get_closest_ship()
+                # If the enemy ship is too close, attack
+                if distance < config.SAFE_ZONE_RADIUS:
+                    Manager.change_drone_role(drone, DroneRole.ATTACKER)
+                    # Skip to next drone
+                    continue
+
                 # Now, look for a suitable empty planet
                 for distance, target_planet in drone.get_free_planet_by_score():
                     # Check if we can still find an available docking spot on this planet
@@ -1146,36 +1160,36 @@ class Manager(object):
                 if drone.role == DroneRole.ASSASSIN:
                     if drone.is_damaged:
                         # logging.debug("[COMMAND] Ship: %s go suicide ship: %s" % (drone.ship.id, drone.target.id))
-                        command = Manager.__suicide_ship_command(drone.ship, drone.target, assassin=True)
+                        command = Manager.__suicide_ship_command(drone, drone.target, assassin=True)
                     else:
                         # logging.debug("[COMMAND] Ship: %s go assassin ship: %s" % (drone.ship.id, drone.target.id))
-                        command = Manager.__attack_ship_command(drone.ship, drone.target, assassin=True)
+                        command = Manager.__attack_ship_command(drone, drone.target, assassin=True)
                     if command:
                         command_queue.append(command)
                 elif drone.role == DroneRole.DEFENDER:
                     if drone.target_type == TargetType.SHIP:
                         # logging.debug("[COMMAND] Ship: %s go intercept ship: %s" % (drone.ship.id, drone.target.id))
-                        command = Manager.__intercept_ship(drone.ship, drone.target, distance)
+                        command = Manager.__intercept_ship(drone, drone.target, distance)
                     else:
                         # logging.debug("[COMMAND] Ship: %s go defense position: %s" % (drone.ship.id, drone.target.pos))
-                        command = Manager.__navigate_target(drone.ship, drone.target, closest = False)
+                        command = Manager.__navigate_target(drone, drone.target, closest = False)
                     if command:
                         command_queue.append(command)
                 else:
                     # logging.debug("[COMMAND] Ship: %s attack ship: %s" % (drone.ship.id, drone.target.id))
-                    command = Manager.__attack_ship_command(drone.ship, drone.target)
+                    command = Manager.__attack_ship_command(drone, drone.target)
                     if command:
                         command_queue.append(command)
 
             # If the target is a planet
             elif drone.target_type == TargetType.PLANET:
                 nb_target_planet += 1
-                command = Manager.__conquer_ship_command(drone.ship, drone.target)
+                command = Manager.__conquer_ship_command(drone, drone.target)
                 if command:
                     command_queue.append(command)
             elif drone.target_type == TargetType.POSITION:
                 # logging.debug("[COMMAND] Ship: %s navigate position: %s" % (drone.ship.id, drone.target.pos))
-                command = Manager.__navigate_target(drone.ship, drone.target, closest=False)
+                command = Manager.__navigate_target(drone, drone.target, closest=False)
                 if command:
                     command_queue.append(command)
 

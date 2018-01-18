@@ -6,11 +6,19 @@ from bot.manager import Manager
 from bot.monitor import Monitor
 from bot.influence import Influence
 
+
+from bot.settings import config
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+
 # This needs to be before the logger
 game = hlt.Game("Rampa")
 
 logging.info("Starting Rampa Bot")
 logger = logging.getLogger("bot")
+# Load configuration
+
 
 # Will catch any exception easily
 try:
@@ -37,6 +45,12 @@ try:
             Manager.update_game_map(game_map, START_TIME)
             Monitor.initial_turn()
             first_turn = False
+            """
+            if len(game_map.all_players()) == 2:
+                config.load_configuration(filename=os.path.join(dir_path, "configuration.pickle"))
+            else:
+                config.load_configuration(filename=os.path.join(dir_path, "configuration4.pickle"))
+            """
         else:
             # Update the game_map in the manager
             Manager.update_game_map(game_map, START_TIME)

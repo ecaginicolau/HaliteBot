@@ -68,15 +68,21 @@ class Game:
         :param name: The bot name (used for naming the log)
         :return: nothing
         """
-        log_file = "log/{}_{}.log".format(tag, name)
-        #log_file = "{}_{}.log".format(tag, name)
+
         try:
             if os.environ['RAMPA_LOG_LEVEL'] == "DEBUG":
+                log_file = "log/{}_{}.log".format(tag, name)
                 logging.basicConfig(filename=log_file, level=logging.DEBUG, filemode='w')
             else:
+                log_file = "nolog.log".format(tag, name)
                 logging.basicConfig(filename=log_file, level=logging.WARNING, filemode='w')
+                root_logger = logging.getLogger()
+                root_logger.disabled = True
         except:
+            log_file = "nolog.log".format(tag, name)
             logging.basicConfig(filename=log_file, level=logging.WARNING, filemode='w')
+            root_logger = logging.getLogger()
+            root_logger.disabled = True
         logging.info("Initialized bot {}".format(name))
 
     def __init__(self, name):

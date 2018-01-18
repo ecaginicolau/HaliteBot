@@ -1,4 +1,5 @@
 import urllib.request, json
+from collections import defaultdict
 from pprint import pprint
 
 
@@ -29,6 +30,22 @@ def stat_challenge(userid, challenge):
                 if score["rank"]==1:
                     wins +=1
     print("[%s]Challenge against %s : Fought %s matches, won %s" % (challenge["time_created"],adversary, nb, wins))
+
+def map_size(userid):
+    url = "https://api.halite.io/v1/api/user/%s/match" % userid
+    response = urllib.request.urlopen(url)
+    data = json.loads(response.read().decode('utf-8'))
+    data_dimension = defaultdict(dict)
+    for match in data:
+        players = len(match["players"])
+        dimension = "%sx%s" % (match["map_width"], match["map_height"])
+        try:
+            data_dimension[players][dimension] += 1
+        except:
+            data_dimension[players][dimension] = 1
+    for players, dic_dimension in data_dimension.items():
+        for dimension, nb in dic_dimension.items():
+            print(players, dimension, nb)
 
 if __name__ == "__main__":
     userid = 6389

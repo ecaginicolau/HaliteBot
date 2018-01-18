@@ -1,5 +1,5 @@
 from bot.navigation import calculate_distance_between
-from . import  entity
+from . import entity
 from .collision import intersect_segment_circle
 
 
@@ -98,7 +98,7 @@ class Map:
         self._players, tokens = Player._parse(tokens)
         self._planets, tokens = entity.Planet._parse(tokens)
 
-        assert(len(tokens) == 0)  # There should be no remaining tokens at this point
+        assert (len(tokens) == 0)  # There should be no remaining tokens at this point
         self._link()
 
     def all_ghost(self):
@@ -138,7 +138,7 @@ class Map:
                 return celestial_object
         return None
 
-    def obstacles_between(self, ship, target, ignore_ships=False, ignore_planets = False):
+    def obstacles_between(self, ship, target, ignore_ships=False, ignore_planets=False):
         """
         Check whether there is a straight-line path to the given point, without planetary obstacles in between.
 
@@ -165,13 +165,15 @@ class Map:
 
         return obstacles
 
-    def add_ghost(self,ghost):
+    def add_ghost(self, ghost):
         self._ghosts.append(ghost)
+
 
 class Player:
     """
     :ivar id: The player's unique id
     """
+
     def __init__(self, player_id, ships={}):
         """
         :param player_id: User's id
@@ -194,8 +196,6 @@ class Player:
         :rtype: entity.Ship
         """
         return self._ships.get(ship_id)
-
-
 
     @staticmethod
     def _parse_single(tokens):

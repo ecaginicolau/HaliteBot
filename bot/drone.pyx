@@ -5,7 +5,7 @@ from enum import Enum
 from bot.influence import Influence
 from bot.monitor import Monitor
 from bot.navigation import calculate_distance_between
-from bot.settings import MAX_TURN_DEFENDER, THREAT_WEIGHT, DISTANCE_WEIGHT, SCORE_NB_DOCKING_SPOTS, SCORE_NB_SHIP_ONGOING, SCORE_DISTANCE_CENTER
+from bot.settings import MAX_TURN_DEFENDER, THREAT_WEIGHT, DISTANCE_WEIGHT, config
 from hlt import constants
 from hlt.entity import Ship
 
@@ -90,7 +90,8 @@ class Drone(object):
         self.is_damaged = False
         # Store in which squad is the drone, none by default
         self.squad = None
-
+        # speed ratio in squad
+        self.speed_ratio = None
 
     def update_ship(self, ship):
         """
@@ -426,7 +427,7 @@ class Drone(object):
         try:
             return self.get_free_planet_by_score()[0]
         except IndexError:
-            None, None
+            return None, None
 
     def get_free_planet_by_score(self):
         """
@@ -442,16 +443,10 @@ class Drone(object):
                     continue
                 # Score is relative to the distance
                 score = distance
-                """
                 # The score decrease with he number of availbale docking spots in the planet
-                score /= planet.nb_available_docking_spots() * SCORE_NB_DOCKING_SPOTS
-                # the Score decrease with the number of ship already going to the planet
-                score /= (planet.nb_available_docking_spots() - dic_nb_available_spot[planet.id] + 1) * SCORE_NB_SHIP_ONGOING
-                """
-                """
+                score -= planet.nb_available_docking_spots() * config.SCORE_NB_DOCKING_SPOTS
                 # the score decrease with the distance of the planet to the center
-                score -= calculate_distance_between(planet.pos, Monitor.get_map_center()) * SCORE_DISTANCE_CENTER
-                """
+                score -= calculate_distance_between(planet.pos, Monitor.get_map_center()) * config.SCORE_DISTANCE_CENTER
                 list_score.append((score, planet))
         list_score = sorted(list_score, key=lambda l: l[0])
         return list_score

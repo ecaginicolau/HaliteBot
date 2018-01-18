@@ -1,5 +1,5 @@
 from libc.math cimport sqrt, M_PI, sin, cos, round, atan2, acos
-from bot.settings import ASSASSIN_AVOID_RADIUS, NAVIGATION_SHIP_DISTANCE, GHOST_RATIO_RADIUS
+from bot.settings import ASSASSIN_AVOID_RADIUS, config
 
 cdef double radians(double angle):
     """
@@ -203,7 +203,7 @@ cpdef bint obstacles_between(Circle ship, Circle target, game_map, bint ignore_s
             if my_ship.pos == ship:
                 continue
             # If the ship is too far ahead, no need to look right now
-            if my_ship.docking_status==0 and calculate_distance_between(my_ship.pos, ship) > NAVIGATION_SHIP_DISTANCE:
+            if my_ship.docking_status==0 and calculate_distance_between(my_ship.pos, ship) > config.NAVIGATION_SHIP_DISTANCE:
                 continue
             if intersect_segment_circle(ship, target, my_ship.pos, fudge=fudge):
                 return True
@@ -242,7 +242,7 @@ cpdef bint obstacles_between(Circle ship, Circle target, game_map, bint ignore_s
             if enemy_ship.pos == target:
                 continue
             # If the ship is too far ahead, no need to look right now
-            if enemy_ship.docking_status==0 and calculate_distance_between(enemy_ship.pos, ship) > NAVIGATION_SHIP_DISTANCE:
+            if enemy_ship.docking_status==0 and calculate_distance_between(enemy_ship.pos, ship) > config.NAVIGATION_SHIP_DISTANCE:
                 continue
             # Handle docked & undocked ship with different fudge (if assassin)
             if enemy_ship.docking_status == 0: # UNDOCKED (hack to avoid import)
@@ -292,14 +292,6 @@ cpdef tuple navigate(Circle ship, Circle target, game_map, double speed, int max
     :rtype: tuple
     """
 
-    """
-    debug_str = "navigate(ship=%s, target=%s, game_map, speed=%s, max_corrections=%s, angular_spep=%s, "
-    debug_str += "ignore_ships=%s, ignore_planets=%s, ignore_ghosts=%s, assassin=%s)"
-    debug_str = debug_str % (
-    ship, target, speed, max_corrections, angular_step, ignore_ships, ignore_planets, ignore_ghosts, assassin)
-    logging.debug(debug_str)
-    """
-
     # If we've run out of tries, we can't navigate
     if max_corrections <= 0:
         return 0, 0, None
@@ -307,7 +299,6 @@ cpdef tuple navigate(Circle ship, Circle target, game_map, double speed, int max
     cdef double distance = calculate_distance_between(ship, target)
     # Calculate the angle between the ship and its target
     cdef int angle = int(round(calculate_angle_between(ship, target)))
-
 
     # New ship target after correction
     cdef double new_target_dx
@@ -319,8 +310,7 @@ cpdef tuple navigate(Circle ship, Circle target, game_map, double speed, int max
     cdef int new_angle = angle
 
     if not ignore_planets or not ignore_ships:
-        while obstacles_between(ship, new_target, game_map, ignore_ships=ignore_ships, ignore_planets=ignore_planets,
-                                ignore_ghosts=ignore_ghosts, assassin=assassin):
+        while obstacles_between(ship, new_target, game_map, ignore_ships=ignore_ships, ignore_planets=ignore_planets, ignore_ghosts=ignore_ghosts, assassin=assassin):
             # Increase the delta angle
             da += angular_step
             # If we ran out of tries
@@ -343,14 +333,12 @@ cpdef tuple navigate(Circle ship, Circle target, game_map, double speed, int max
             new_target_dy = sin(radians(new_angle)) * distance
             new_target = Circle(ship.x + new_target_dx, ship.y + new_target_dy, target.radius)
 
-
-
     speed = speed if (distance >= speed) else distance
 
     #Also calculate the future position of the ship
     new_target_dx = cos(radians(new_angle)) * speed
     new_target_dy = sin(radians(new_angle)) * speed
-    new_target = Circle(ship.x + new_target_dx, ship.y + new_target_dy, ship.radius * GHOST_RATIO_RADIUS)
+    new_target = Circle(ship.x + new_target_dx, ship.y + new_target_dy, ship.radius * config.GHOST_RATIO_RADIUS)
 
     return speed, new_angle, new_target
 
