@@ -31,6 +31,8 @@ class DroneRole(Enum):
     DEFENDER = "defender"
     # The drone role is to attack the enemy's miners
     ASSASSIN = "assassin"
+    # The drone role is to attack the enemy's miners
+    TROLL = "troll"
 
 
 class TargetType(Enum):

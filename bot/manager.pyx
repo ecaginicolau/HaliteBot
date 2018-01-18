@@ -5,7 +5,7 @@ from datetime import datetime
 
 from bot.monitor import Monitor
 from bot.drone import DroneRole, TargetType, Drone
-from bot.navigation import calculate_distance_between, calculate_length
+from bot.navigation import calculate_distance_between, calculate_length, calculate_angle_between, dx_target
 from bot.influence import Influence
 from bot.settings import  NB_SHIP_THRESHOLD, MAX_TURN_DURATION, MINER_CAN_DEFEND, MIN_SCORE_DEFENSE, FOLLOW_DISTANCE, EARLY_RATIO_ASSASSIN, EARLY_RATIO_ATTACKER, \
     EARLY_RATIO_DEFENDER, LATE_RATIO_DEFENDER, LATE_RATIO_ATTACKER, LATE_RATIO_ASSASSIN, config
@@ -20,6 +20,8 @@ from hlt.entity import Ship, Position
     - Check for dead drone every turn
     - Check for damaged drone every turn
 """
+
+
 class Manager(object):
     """
     The role of this class is to manage every drone
@@ -409,6 +411,13 @@ class Manager(object):
                     drone = Manager.get_drone(drone_id)
                     Manager.change_drone_role(drone, DroneRole.ATTACKER)
                 return None
+            if config.TROLL_EXIST:
+                logging.debug("There are 2 players sending a troll")
+                for drone_id in list(Manager.__all_role_drones[DroneRole.IDLE]):
+                    drone = Manager.get_drone(drone_id)
+                    Manager.change_drone_role(drone, DroneRole.TROLL)
+                    break
+
 
         """
         # 1st: There are still planets to conquer
@@ -1087,6 +1096,48 @@ class Manager(object):
                     distance = calculate_distance_between(drone.ship.pos, defense_point.pos)
                     # Make it the new target (ship type?)
                     drone.assign_target(defense_point, distance, target_type=TargetType.POSITION)
+
+    @staticmethod
+    def order_troll():
+        """
+        [EVERY TURN]
+        Main IA function for all drone with DEFENDER role
+            - Loop through all Defenders
+            - Make sure to undock the ship if needed
+            - Don't change drone with valid target
+            - Look for a target for drone without one: closest enemy ship
+            - At the end every defenders should have a target or be undocking
+        :return:
+        """
+        # Loop through all drone
+        for ship_id in Manager.__all_role_drones[DroneRole.TROLL]:
+            # Get the drone
+            drone = Manager.__all_drones[ship_id]
+            # Get Ship
+            ship = drone.ship
+            # Look for closest ship docked
+            distance, enemy_ship = drone.get_closest_ship(docked_only=True)
+            # If there are no docked ship, get the closest ship
+            if enemy_ship is None:
+                distance, enemy_ship = drone.get_closest_ship()
+                # Assign the ship
+                drone.assign_target(enemy_ship, distance, target_type=TargetType.SHIP)
+                # Skip to next drone
+                continue
+            # From here, there is a cloest docked ship
+            # Find the planet it's docked into
+            planet = enemy_ship.planet
+            logging.debug("troll going around planet: %s" % planet.id)
+            # Find a position around the planet
+            angle = int(round(calculate_angle_between(planet.pos, drone.ship.pos)))
+            angle += config.TROLL_ANGLE_STEP
+            if angle > 360:
+                angle -= 360
+            distance = planet.pos.radius + config.TROLL_DISTANCE
+            target = dx_target(planet.pos, angle, distance)
+            position = Position(target.x, target.y)
+            drone.assign_target(position, target_type=TargetType.POSITION)
+
 
     @staticmethod
     def order_free_planet():

@@ -51,7 +51,7 @@ class Configuration(object):
     def __init__(self):
         # distance after which accept we slow down to regroup drones
         self.SLOW_TARGET_DISTANCE = 15
-        self.SLOW_TO_TARGET = True
+        self.SLOW_TO_TARGET = False
         self.INTERCEPT = False
         # Only apply the slow ratio to a part of the speed
         self.SLOW_SPEED_RATIO = 1.0
@@ -84,8 +84,7 @@ class Configuration(object):
         # Distance to trigger squad creation
         self.SQUAD_DISTANCE_CREATION = 20
         # Radius of the squad by number of ship
-        # self.SQUAD_SCATTERED_THRESHOLD = 2.4
-        self.SQUAD_SCATTERED_THRESHOLD = 24
+        self.SQUAD_SCATTERED_THRESHOLD = 2.4
         self.SQUAD_SIZE = 6
         self.SQUAD_REGROUP = False
         # Ratio of bravery of the squad
@@ -97,6 +96,15 @@ class Configuration(object):
         self.SQUAD_RUN_AWAY = False
         # Add the center as a ghost, doesn't work that well
         self.CENTER_GHOST = False
+
+        # enemy ghost
+        self.ENEMY_GHOST = False
+        self.ENEMY_GHOST_VELOCITY_RATIO = 0.5
+
+        # troll settings
+        self.TROLL_ANGLE_STEP = 20
+        self.TROLL_DISTANCE = 18
+        self.TROLL_EXIST = True
 
     handled_data={
         #"INITIAL_SAFE_DISTANCE": 5,

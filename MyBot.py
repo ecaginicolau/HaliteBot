@@ -45,12 +45,12 @@ try:
             Manager.update_game_map(game_map, START_TIME)
             Monitor.initial_turn()
             first_turn = False
-            """
             if len(game_map.all_players()) == 2:
-                config.load_configuration(filename=os.path.join(dir_path, "configuration.pickle"))
+                config.NB_IN_INFLUENCE_RATIO = 1.8
+                # config.load_configuration(filename=os.path.join(dir_path, "configuration.pickle"))
             else:
-                config.load_configuration(filename=os.path.join(dir_path, "configuration4.pickle"))
-            """
+                config.NB_IN_INFLUENCE_RATIO = 1.4
+                # config.load_configuration(filename=os.path.join(dir_path, "configuration4.pickle"))
         else:
             # Update the game_map in the manager
             Manager.update_game_map(game_map, START_TIME)
@@ -76,6 +76,8 @@ try:
         Manager.order_defender()
         # Order miner to mine
         Manager.order_miner()
+        # Order miner to mine
+        Manager.order_troll()
 
         # Create all commands
         command_queue = Manager.create_command_queue()

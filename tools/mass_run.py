@@ -54,9 +54,10 @@ class Task:
         :return:
         """
         # cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteBotV74\\run_bot.bat" """
-        # cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteHerve\\run_bot.bat" """
-        # cmd = """halite.exe -r -q -d "312 206" "python MyBot.py" "..\\HaliteHerve\\run_bot.bat" """
-        cmd = """halite.exe -r -q  -d "384 256" "python MyBot.py" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" """
+        cmd = """halite.exe -r -q -d "240 160" "python MyBot.py" "..\\HaliteHerve\\run_bot.bat" """
+        #cmd = """halite.exe -r -q -d "312 206" "python MyBot.py" "..\\HaliteHerve\\run_bot.bat" """
+        #cmd = """halite.exe -r -q  -d "384 256" "python MyBot.py" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" "..\\HaliteBotV59\\run_bot.bat" """
+        # cmd = """halite.exe -r -q  -d "384 256" "python MyBot.py" "..\\HaliteHerve\\run_bot.bat" "..\\HaliteHerve\\run_bot.bat" "..\\HaliteHerve\\run_bot.bat" """
         output = subprocess.check_output(cmd).decode("ascii")
         data = json.loads(output)
         #pprint( data)

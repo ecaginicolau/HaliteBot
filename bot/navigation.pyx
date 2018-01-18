@@ -256,9 +256,9 @@ cpdef bint obstacles_between(Circle ship, Circle target, game_map, bint ignore_s
 
     return False
 
-cdef Circle dx_target(start, angle, distance):
-    cdef int new_target_dx
-    cdef int new_target_dy
+cpdef Circle dx_target(Circle start,int angle, double distance):
+    cdef double new_target_dx
+    cdef double new_target_dy
     cdef Circle new_target
     if angle < 0:
         angle += 360

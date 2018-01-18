@@ -1,6 +1,7 @@
 import logging
 from bot.settings import DEFENSE_POINT_RADIUS, config
 from bot.navigation import Circle, calculate_distance_between, calculate_length
+from hlt import constants
 from hlt.entity import Ship, Position
 from .influence import Influence
 
@@ -149,6 +150,11 @@ class Monitor(object):
                 ship = Monitor.__all_ships_dict[ship_id]
                 # Calculate the velocity based on the old positoin
                 ship.velocity = Circle(ship.pos.x - old_position.x, ship.pos.y - old_position.y)
+                if config.ENEMY_GHOST:
+                    new_target = ship.pos + ship.velocity * config.ENEMY_GHOST_VELOCITY_RATIO
+                    new_target.radius = constants.SHIP_RADIUS * config.GHOST_RATIO_RADIUS
+                    if ship.owner.id != Monitor.player_id:
+                        Monitor.game_map.add_ghost((ship.pos, new_target))
                 # Store the new position for next turn
             except KeyError:
                 # If the ship can't be found anymore add it to "need_to_be_deleted" list for later
